@@ -101,6 +101,11 @@ function createWindow() {
     minHeight: 560,
     title: 'for-mark',
     backgroundColor: '#ffffff',
+    // Mac：隐藏标题栏文字，红绿灯浮在自定义工具栏上（Typora 式沉浸）
+    // trafficLightPosition：hiddenInset 的默认垂直位置偏低，按 44px 工具栏手工居中
+    ...(process.platform === 'darwin'
+      ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 16 } }
+      : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

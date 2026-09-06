@@ -7,18 +7,23 @@
   </head>
   <body>
     <header class="toolbar">
-      <span class="logo">for-mark</span>
-      <span class="spacer"></span>
+      <span id="win-title" class="win-title"></span>
+      <span id="word-count" class="word-count">0 字</span>
       <button id="sidebar-outline-btn" class="tool-btn" data-i18n="toolbar.outline" data-i18n-title="toolbar.outlineTitle">大纲</button>
-      <button id="sidebar-files-btn" class="tool-btn" data-i18n="toolbar.files" data-i18n-title="toolbar.filesTitle">文件</button>
       <button id="source-mode-btn" class="tool-btn" data-i18n="toolbar.sourceMode" data-i18n-title="toolbar.sourceModeTitle">源码</button>
-      <button id="find-btn" class="tool-btn" data-i18n="toolbar.find" data-i18n-title="toolbar.findTitle">查找</button>
       <button id="import-btn" class="tool-btn" data-i18n="toolbar.open" data-i18n-title="toolbar.openTitle">打开</button>
       <button id="export-btn" class="tool-btn" data-i18n="toolbar.save" data-i18n-title="toolbar.saveTitle">保存</button>
-      <button id="export-html-btn" class="tool-btn" data-i18n="toolbar.exportHtml" data-i18n-title="toolbar.exportHtmlTitle">HTML</button>
-      <span id="word-count" class="word-count">0 字</span>
       <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">🌙</button>
+      <button id="more-btn" class="tool-btn" title="更多">⋯</button>
     </header>
+
+    <div id="more-menu" class="more-menu" hidden>
+      <button id="menu-files-btn" class="menu-item" data-i18n="toolbar.files">文件</button>
+      <button id="menu-find-btn" class="menu-item"><span data-i18n="toolbar.find">查找</span><span class="shortcut">⌘F</span></button>
+      <button id="menu-export-html-btn" class="menu-item"><span>导出 HTML</span><span class="shortcut">⌘⇧H</span></button>
+      <div class="menu-sep"></div>
+      <button id="menu-settings-btn" class="menu-item">⚙ <span>设置</span></button>
+    </div>
 
     <div id="find-bar" class="find-bar" hidden>
       <input id="find-input" class="find-input" data-i18n-placeholder="find.placeholder" placeholder="查找" />

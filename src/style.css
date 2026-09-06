@@ -50,22 +50,109 @@ body {
   z-index: 10;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   height: 44px;
   padding: 0 16px;
   background: var(--toolbar-bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
+  /* 隐藏标题栏后，整条工具栏可作为拖拽区移动窗口 */
+  -webkit-app-region: drag;
+}
+
+/* 按钮和计数不参与拖拽，保证可点击 */
+.toolbar button,
+.toolbar .word-count {
+  -webkit-app-region: no-drag;
+}
+
+/* ⋯ 溢出菜单 */
+.more-menu {
+  position: fixed;
+  top: 48px;
+  z-index: 20;
+  min-width: 190px;
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.more-menu[hidden] {
+  display: none;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 13px;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: var(--code-bg);
+}
+
+.menu-item .shortcut {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 6px 8px;
+  background: var(--border);
+}
+
+/* 轻提示（设置占位等） */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 8px 18px;
+  background: var(--fg);
+  color: var(--bg);
+  border-radius: 8px;
+  font-size: 13px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Mac 隐藏标题栏：红绿灯按钮浮在工具栏左侧，让出空间 */
+html.mac .toolbar {
+  padding-left: 80px;
+}
+
+.win-title {
+  /* 绝对定位于工具栏正中：不受右侧按钮数量影响，始终居中 */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 40%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .logo {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--accent);
-}
-
-.spacer {
-  flex: 1;
+  display: none;
 }
 
 .word-count {

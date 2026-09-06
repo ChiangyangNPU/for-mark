@@ -93,7 +93,10 @@ function updateWordCount(markdown: string) {
 
 function updateTitle() {
   const tab = activeTab()
-  document.title = `${tab?.dirty ? '• ' : ''}${tab?.name ?? 'for-mark'} · for-mark`
+  const text = `${tab?.dirty ? '• ' : ''}${tab?.name ?? t('tab.untitled')}`
+  document.title = text
+  const el = document.getElementById('win-title')
+  if (el) el.textContent = text
 }
 
 /** 把任一标签页的未保存状态同步给 Electron 主进程（关闭确认用） */
@@ -451,6 +454,10 @@ function wireFindBar() {
 async function boot() {
   try {
     applyDomTexts()
+    // Mac 隐藏标题栏：工具栏让出红绿灯按钮的空间
+    if (navigator.userAgent.includes('Macintosh')) {
+      document.documentElement.classList.add('mac')
+    }
     // 菜单栏文案跟随当前语言（Electron 主进程据此重建菜单）
     native?.setLocaleInfo(menuLabels())
     const dark = localStorage.getItem(THEME_KEY) === 'dark'
@@ -473,14 +480,42 @@ async function boot() {
     // 工具栏
     document.getElementById('import-btn')?.addEventListener('click', () => void openDocument())
     document.getElementById('export-btn')?.addEventListener('click', () => void saveDocument())
-    document.getElementById('export-html-btn')?.addEventListener('click', () =>
-      void exportHtml(currentMarkdown(), activeTab()?.name ?? '未命名.md'),
-    )
-    document.getElementById('find-btn')?.addEventListener('click', openFindBar)
     document.getElementById('source-mode-btn')?.addEventListener('click', () => void setSourceMode(!sourceMode))
-    document.getElementById('open-folder-btn')?.addEventListener('click', () => void openFolder())
     document.getElementById('sidebar-outline-btn')?.addEventListener('click', () => toggleSidebar('outline'))
-    document.getElementById('sidebar-files-btn')?.addEventListener('click', () => toggleSidebar('files'))
+
+    // ⋯ 溢出菜单
+    document.getElementById('menu-files-btn')?.addEventListener('click', () => {
+      toggleSidebar('files')
+      closeMoreMenu()
+    })
+    document.getElementById('menu-find-btn')?.addEventListener('click', () => {
+      openFindBar()
+      closeMoreMenu()
+    })
+    document.getElementById('menu-export-html-btn')?.addEventListener('click', () => {
+      void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled'))
+      closeMoreMenu()
+    })
+    document.getElementById('menu-settings-btn')?.addEventListener('click', () => {
+      closeMoreMenu()
+      showToast('设置功能开发中，敬请期待')
+    })
+    document.getElementById('more-btn')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      const menu = document.getElementById('more-menu')
+      if (menu) menu.hidden = !menu.hidden
+    })
+    // 点击菜单外任意位置收起
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('more-menu')
+      if (!menu || menu.hidden) return
+      const target = e.target as HTMLElement
+      if (!target.closest('#more-menu') && !target.closest('#more-btn')) {
+        menu.hidden = true
+      }
+    })
+
+    document.getElementById('open-folder-btn')?.addEventListener('click', () => void openFolder())
 
     document.getElementById('theme-toggle')?.addEventListener('click', async () => {
       const isDark = document.body.classList.toggle('dark')
@@ -493,6 +528,7 @@ async function boot() {
 
     // 快捷键（源码模式下 F 键交给 CodeMirror）
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeMoreMenu()
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
       if (e.key === 'f' && !sourceMode) {
@@ -561,8 +597,22 @@ async function boot() {
   }
 }
 
-function toggleSidebar(which: 'outline' | 'files') {
-  const sidebar = document.getElementById('sidebar')
+function closeMoreMenu() {
+  const menu = document.getElementById('more-menu')
+  if (menu) menu.hidden = true
+}
+
+function showToast(text: string) {
+  document.getElementById('toast')?.remove()
+  const el = document.createElement('div')
+  el.id = 'toast'
+  el.className = 'toast'
+  el.textContent = text
+  document.body.appendChild(el)
+  window.setTimeout(() => el.remove(), 2000)
+}
+
+function toggleSidebar(which: 'outline' | 'files') {  const sidebar = document.getElementById('sidebar')
   const outlinePanel = document.getElementById('outline-panel')
   const filesPanel = document.getElementById('files-panel')
   if (!sidebar || !outlinePanel || !filesPanel) return
