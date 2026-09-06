@@ -9,42 +9,42 @@
     <header class="toolbar">
       <span class="logo">for-mark</span>
       <span class="spacer"></span>
-      <button id="sidebar-outline-btn" class="tool-btn" title="大纲面板">大纲</button>
-      <button id="sidebar-files-btn" class="tool-btn" title="文件树 / 最近文件">文件</button>
-      <button id="source-mode-btn" class="tool-btn" title="切换 源码 / 所见即所得 模式 (Cmd/Ctrl+E)">源码</button>
-      <button id="find-btn" class="tool-btn" title="查找替换 (Cmd/Ctrl+F)">查找</button>
-      <button id="import-btn" class="tool-btn" title="打开 .md 文件">打开</button>
-      <button id="export-btn" class="tool-btn" title="保存 (Cmd/Ctrl+S)">保存</button>
-      <button id="export-html-btn" class="tool-btn" title="导出为独立 HTML 文件">HTML</button>
+      <button id="sidebar-outline-btn" class="tool-btn" data-i18n="toolbar.outline" data-i18n-title="toolbar.outlineTitle">大纲</button>
+      <button id="sidebar-files-btn" class="tool-btn" data-i18n="toolbar.files" data-i18n-title="toolbar.filesTitle">文件</button>
+      <button id="source-mode-btn" class="tool-btn" data-i18n="toolbar.sourceMode" data-i18n-title="toolbar.sourceModeTitle">源码</button>
+      <button id="find-btn" class="tool-btn" data-i18n="toolbar.find" data-i18n-title="toolbar.findTitle">查找</button>
+      <button id="import-btn" class="tool-btn" data-i18n="toolbar.open" data-i18n-title="toolbar.openTitle">打开</button>
+      <button id="export-btn" class="tool-btn" data-i18n="toolbar.save" data-i18n-title="toolbar.saveTitle">保存</button>
+      <button id="export-html-btn" class="tool-btn" data-i18n="toolbar.exportHtml" data-i18n-title="toolbar.exportHtmlTitle">HTML</button>
       <span id="word-count" class="word-count">0 字</span>
-      <button id="theme-toggle" class="theme-toggle" title="切换深色/浅色主题">🌙</button>
+      <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">🌙</button>
     </header>
 
     <div id="find-bar" class="find-bar" hidden>
-      <input id="find-input" class="find-input" placeholder="查找" />
+      <input id="find-input" class="find-input" data-i18n-placeholder="find.placeholder" placeholder="查找" />
       <span id="find-count" class="find-count">0/0</span>
-      <button id="find-prev" class="tool-btn" title="上一个 (Shift+Enter)">↑</button>
-      <button id="find-next" class="tool-btn" title="下一个 (Enter)">↓</button>
-      <input id="replace-input" class="find-input" placeholder="替换为" />
-      <button id="replace-one" class="tool-btn">替换</button>
-      <button id="replace-all" class="tool-btn">全部</button>
-      <button id="find-close" class="tool-btn" title="关闭 (Esc)">✕</button>
+      <button id="find-prev" class="tool-btn" data-i18n="find.prev" data-i18n-title="find.prev">↑</button>
+      <button id="find-next" class="tool-btn" data-i18n="find.next" data-i18n-title="find.next">↓</button>
+      <input id="replace-input" class="find-input" data-i18n-placeholder="find.replacePlaceholder" placeholder="替换为" />
+      <button id="replace-one" class="tool-btn" data-i18n="find.replace">替换</button>
+      <button id="replace-all" class="tool-btn" data-i18n="find.replaceAll">全部</button>
+      <button id="find-close" class="tool-btn" data-i18n-title="find.close">✕</button>
     </div>
 
     <div class="workbench">
       <aside id="sidebar" class="sidebar" hidden>
         <div id="outline-panel" class="sidebar-panel" hidden>
-          <div class="sidebar-title">大纲</div>
+          <div class="sidebar-title" data-i18n="sidebar.outline">大纲</div>
           <div id="outline-list" class="outline-list"></div>
         </div>
         <div id="files-panel" class="sidebar-panel" hidden>
           <div class="sidebar-title">
-            文件
-            <button id="open-folder-btn" class="tool-btn small" title="打开文件夹">＋文件夹</button>
+            <span data-i18n="sidebar.files">文件</span>
+            <button id="open-folder-btn" class="tool-btn small" data-i18n="toolbar.newFolder" title="打开文件夹">＋文件夹</button>
           </div>
-          <div class="sidebar-subtitle">最近打开</div>
+          <div class="sidebar-subtitle" data-i18n="sidebar.recent">最近打开</div>
           <div id="recent-list" class="file-list"></div>
-          <div class="sidebar-subtitle" id="folder-title">文件夹</div>
+          <div class="sidebar-subtitle" id="folder-title" data-i18n="sidebar.folder">文件夹</div>
           <div id="folder-tree" class="file-list"></div>
         </div>
       </aside>

@@ -4,6 +4,7 @@
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { TextSelection } from '@milkdown/kit/prose/state'
+import { t } from './i18n'
 
 export interface OutlineItem {
   level: number
@@ -28,7 +29,7 @@ export function renderOutline(container: HTMLElement, items: OutlineItem[], view
   if (!items.length) {
     const empty = document.createElement('div')
     empty.className = 'outline-empty'
-    empty.textContent = '暂无标题'
+    empty.textContent = t('outline.empty')
     container.appendChild(empty)
     return
   }

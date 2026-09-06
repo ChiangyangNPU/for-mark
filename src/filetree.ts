@@ -1,6 +1,7 @@
 /**
  * 文件树 / 最近文件 渲染（数据来自 Electron IPC）
  */
+import { t } from './i18n'
 
 export interface FileEntry {
   name: string
@@ -49,7 +50,7 @@ export function renderRecent(
   if (!recent.length) {
     const empty = document.createElement('div')
     empty.className = 'outline-empty'
-    empty.textContent = '暂无记录'
+    empty.textContent = t('files.empty')
     container.appendChild(empty)
     return
   }

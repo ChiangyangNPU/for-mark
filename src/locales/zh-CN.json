@@ -1,0 +1,70 @@
+{
+  "app": {
+    "title": "for-mark"
+  },
+  "toolbar": {
+    "outline": "大纲",
+    "outlineTitle": "大纲面板",
+    "files": "文件",
+    "filesTitle": "文件树 / 最近文件",
+    "sourceMode": "源码",
+    "sourceModeOn": "编辑",
+    "sourceModeTitle": "切换 源码 / 所见即所得 模式 (Cmd/Ctrl+E)",
+    "find": "查找",
+    "findTitle": "查找替换 (Cmd/Ctrl+F)",
+    "open": "打开",
+    "openTitle": "打开 .md 文件",
+    "save": "保存",
+    "saveTitle": "保存 (Cmd/Ctrl+S)",
+    "exportHtml": "HTML",
+    "exportHtmlTitle": "导出为独立 HTML 文件",
+    "themeTitle": "切换深色/浅色主题",
+    "newFolder": "＋文件夹"
+  },
+  "find": {
+    "placeholder": "查找",
+    "replacePlaceholder": "替换为",
+    "prev": "上一个 (Shift+Enter)",
+    "next": "下一个 (Enter)",
+    "replace": "替换",
+    "replaceAll": "全部",
+    "close": "关闭 (Esc)"
+  },
+  "sidebar": {
+    "outline": "大纲",
+    "files": "文件",
+    "recent": "最近打开",
+    "folder": "文件夹"
+  },
+  "outline": {
+    "empty": "暂无标题"
+  },
+  "files": {
+    "empty": "暂无记录"
+  },
+  "tab": {
+    "untitled": "未命名.md"
+  },
+  "editor": {
+    "wordCount": "{count} 字"
+  },
+  "dialog": {
+    "closeConfirm": "「{name}」有未保存的修改，确定关闭吗？"
+  },
+  "boot": {
+    "failed": "编辑器启动失败："
+  },
+  "menu": {
+    "file": "文件",
+    "open": "打开…",
+    "openFolder": "打开文件夹…",
+    "save": "保存",
+    "saveAs": "另存为…",
+    "newTab": "新标签页",
+    "closeTab": "关闭标签页",
+    "autosave": "自动保存到文件",
+    "export": "导出",
+    "exportHtml": "导出 HTML…",
+    "exportPdf": "打印 / 导出 PDF…"
+  }
+}

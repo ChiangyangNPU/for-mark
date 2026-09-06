@@ -13,6 +13,25 @@ const DEV_SERVER_URL = process.env.ELECTRON_RENDERER_URL
 let mainWindow = null
 let autosaveMenuItem = null
 let rendererDirty = false
+let autosaveEnabled = false
+
+// 菜单文案：默认中文，渲染层启动后把当前语言的文案经 IPC 发来并重建菜单
+const DEFAULT_MENU_LABELS = {
+  file: '文件',
+  open: '打开…',
+  openFolder: '打开文件夹…',
+  save: '保存',
+  saveAs: '另存为…',
+  newTab: '新标签页',
+  closeTab: '关闭标签页',
+  autosave: '自动保存到文件',
+  export: '导出',
+  exportHtml: '导出 HTML…',
+  exportPdf: '打印 / 导出 PDF…',
+}
+let menuLabels = { ...DEFAULT_MENU_LABELS }
+
+const L = (key) => menuLabels[key] ?? DEFAULT_MENU_LABELS[key]
 
 // 文件关联：Finder 双击 .md 时 macOS 通过 open-file 事件传入路径；
 // 应用未就绪时先排队，窗口加载完成后再发给渲染层
@@ -36,32 +55,35 @@ function buildMenu() {
   const template = [
     ...(isMac ? [{ role: 'appMenu' }] : []),
     {
-      label: '文件',
+      label: L('file'),
       submenu: [
-        { label: '打开…', accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open') },
-        { label: '打开文件夹…', accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open-folder') },
-        { label: '保存', accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save') },
-        { label: '另存为…', accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save-as') },
+        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open') },
+        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open-folder') },
+        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save') },
+        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save-as') },
         { type: 'separator' },
-        { label: '新标签页', accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer('for-mark:menu', 'new-tab') },
-        { label: '关闭标签页', accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer('for-mark:menu', 'close-tab') },
+        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer('for-mark:menu', 'new-tab') },
+        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer('for-mark:menu', 'close-tab') },
         { type: 'separator' },
         {
           id: 'autosave',
-          label: '自动保存到文件',
+          label: L('autosave'),
           type: 'checkbox',
-          checked: false,
-          click: (item) => sendToRenderer('for-mark:autosave', item.checked),
+          checked: autosaveEnabled,
+          click: (item) => {
+            autosaveEnabled = item.checked
+            sendToRenderer('for-mark:autosave', item.checked)
+          },
         },
         { type: 'separator' },
         isMac ? { role: 'close' } : { role: 'quit' },
       ],
     },
     {
-      label: '导出',
+      label: L('export'),
       submenu: [
-        { label: '导出 HTML…', accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer('for-mark:menu', 'export-html') },
-        { label: '打印 / 导出 PDF…', accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer('for-mark:menu', 'export-pdf') },
+        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer('for-mark:menu', 'export-html') },
+        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer('for-mark:menu', 'export-pdf') },
       ],
     },
     { role: 'editMenu' },
@@ -209,6 +231,14 @@ ipcMain.handle('for-mark:open-folder', async () => {
 // 渲染层同步未保存状态
 ipcMain.on('for-mark:set-dirty', (_event, dirty) => {
   rendererDirty = !!dirty
+})
+
+// 渲染层把当前语言的菜单文案发来，重建菜单
+ipcMain.on('for-mark:set-locale-info', (_event, labels) => {
+  if (labels && typeof labels === 'object') {
+    menuLabels = { ...DEFAULT_MENU_LABELS, ...labels }
+    buildMenu()
+  }
 })
 
 // ---------- 生命周期 ----------

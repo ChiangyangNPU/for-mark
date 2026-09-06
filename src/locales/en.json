@@ -1,0 +1,70 @@
+{
+  "app": {
+    "title": "for-mark"
+  },
+  "toolbar": {
+    "outline": "Outline",
+    "outlineTitle": "Outline panel",
+    "files": "Files",
+    "filesTitle": "File tree / Recent files",
+    "sourceMode": "Source",
+    "sourceModeOn": "Edit",
+    "sourceModeTitle": "Toggle source / WYSIWYG mode (Cmd/Ctrl+E)",
+    "find": "Find",
+    "findTitle": "Find & replace (Cmd/Ctrl+F)",
+    "open": "Open",
+    "openTitle": "Open .md file",
+    "save": "Save",
+    "saveTitle": "Save (Cmd/Ctrl+S)",
+    "exportHtml": "HTML",
+    "exportHtmlTitle": "Export as standalone HTML file",
+    "themeTitle": "Toggle dark/light theme",
+    "newFolder": "＋Folder"
+  },
+  "find": {
+    "placeholder": "Find",
+    "replacePlaceholder": "Replace with",
+    "prev": "Previous (Shift+Enter)",
+    "next": "Next (Enter)",
+    "replace": "Replace",
+    "replaceAll": "All",
+    "close": "Close (Esc)"
+  },
+  "sidebar": {
+    "outline": "Outline",
+    "files": "Files",
+    "recent": "Recent",
+    "folder": "Folder"
+  },
+  "outline": {
+    "empty": "No headings"
+  },
+  "files": {
+    "empty": "No history"
+  },
+  "tab": {
+    "untitled": "Untitled.md"
+  },
+  "editor": {
+    "wordCount": "{count} chars"
+  },
+  "dialog": {
+    "closeConfirm": "\"{name}\" has unsaved changes. Close anyway?"
+  },
+  "boot": {
+    "failed": "Editor failed to start: "
+  },
+  "menu": {
+    "file": "File",
+    "open": "Open…",
+    "openFolder": "Open Folder…",
+    "save": "Save",
+    "saveAs": "Save As…",
+    "newTab": "New Tab",
+    "closeTab": "Close Tab",
+    "autosave": "Auto-save to File",
+    "export": "Export",
+    "exportHtml": "Export HTML…",
+    "exportPdf": "Print / Export PDF…"
+  }
+}

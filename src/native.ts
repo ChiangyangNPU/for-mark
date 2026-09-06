@@ -19,6 +19,8 @@ export interface NativeFileAPI {
   onAutosave(callback: (enabled: boolean) => void): void
   /** 文件关联：Finder 双击 .md / 系统打开方式传入的文件路径 */
   onOpenPath(callback: (filePath: string) => void): void
+  /** 把当前语言的菜单栏文案发给主进程重建菜单 */
+  setLocaleInfo(labels: Record<string, string>): void
 }
 
 declare global {

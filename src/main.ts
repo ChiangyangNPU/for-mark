@@ -19,6 +19,7 @@ import { exportHtml, exportPdf } from './export'
 import { createSourceEditor } from './sourcemode'
 import { renderFileTree, renderRecent, type FileEntry } from './filetree'
 import { native } from './native'
+import { t, applyDomTexts, menuLabels } from './i18n'
 
 // ---------------------------------------------------------------------------
 // 状态
@@ -87,7 +88,7 @@ function saveDoc(markdown: string) {
 
 function updateWordCount(markdown: string) {
   const el = document.getElementById('word-count')
-  if (el) el.textContent = `${markdown.replace(/\s/g, '').length} 字`
+  if (el) el.textContent = t('editor.wordCount', { count: markdown.replace(/\s/g, '').length })
 }
 
 function updateTitle() {
@@ -227,7 +228,7 @@ async function closeTab(id: string) {
   const tab = tabs.find((t) => t.id === id)
   if (!tab) return
   const liveDirty = tab.id === activeTabId ? currentMarkdown() !== tab.markdown : tab.dirty
-  if (liveDirty && !window.confirm(`「${tab.name}」有未保存的修改，确定关闭吗？`)) return
+  if (liveDirty && !window.confirm(t('dialog.closeConfirm', { name: tab.name }))) return
 
   const index = tabs.indexOf(tab)
   tabs.splice(index, 1)
@@ -240,7 +241,7 @@ async function closeTab(id: string) {
       editor?.destroy()
       editor = null
       pmView = null
-      newTab('未命名.md', '')
+      newTab(t('tab.untitled'), '')
       await activateTab(tabs[0].id)
     }
   }
@@ -372,7 +373,7 @@ async function setSourceMode(on: boolean, syncContent = true) {
   sourceMode = on
   pmEl.hidden = on
   srcEl.hidden = !on
-  if (btn) btn.textContent = on ? '编辑' : '源码'
+  if (btn) btn.textContent = on ? t('toolbar.sourceModeOn') : t('toolbar.sourceMode')
 }
 
 // ---------------------------------------------------------------------------
@@ -449,11 +450,14 @@ function wireFindBar() {
 
 async function boot() {
   try {
+    applyDomTexts()
+    // 菜单栏文案跟随当前语言（Electron 主进程据此重建菜单）
+    native?.setLocaleInfo(menuLabels())
     const dark = localStorage.getItem(THEME_KEY) === 'dark'
     document.body.classList.toggle('dark', dark)
     setMermaidTheme(dark ? 'dark' : 'default')
 
-    const tab = newTab('未命名.md', loadDoc())
+    const tab = newTab(t('tab.untitled'), loadDoc())
     activeTabId = tab.id
     editor = await createEditor(tab.markdown)
     editor.action((ctx) => {
@@ -499,8 +503,8 @@ async function boot() {
         void setSourceMode(!sourceMode)
       } else if (e.key === 't') {
         e.preventDefault()
-        const t = newTab('未命名.md', '')
-        void activateTab(t.id)
+        const created = newTab(t('tab.untitled'), '')
+        void activateTab(created.id)
       } else if (e.key === 'w') {
         e.preventDefault()
         if (activeTabId) void closeTab(activeTabId)
@@ -515,13 +519,13 @@ async function boot() {
         save: () => void saveDocument(),
         'save-as': () => void saveDocument(true),
         'new-tab': () => {
-          const t = newTab('未命名.md', '')
-          void activateTab(t.id)
+          const created = newTab(t('tab.untitled'), '')
+          void activateTab(created.id)
         },
         'close-tab': () => {
           if (activeTabId) void closeTab(activeTabId)
         },
-        'export-html': () => void exportHtml(currentMarkdown(), activeTab()?.name ?? '未命名.md'),
+        'export-html': () => void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
         'export-pdf': () => void exportPdf(),
       }
       handlers[action]?.()
@@ -551,7 +555,7 @@ async function boot() {
   } catch (err) {
     const tip = document.createElement('pre')
     tip.style.cssText = 'color:#d1242f;padding:16px;white-space:pre-wrap'
-    tip.textContent = '编辑器启动失败：\n' + (err instanceof Error ? err.stack : String(err))
+    tip.textContent = t('boot.failed') + (err instanceof Error ? err.stack : String(err))
     document.body.appendChild(tip)
     throw err
   }

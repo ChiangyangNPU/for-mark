@@ -28,4 +28,6 @@ contextBridge.exposeInMainWorld('forMarkAPI', {
   onOpenPath: (callback) => {
     ipcRenderer.on('for-mark:open-path', (_event, filePath) => callback(filePath))
   },
+  /** 把当前语言的菜单文案发给主进程重建菜单 */
+  setLocaleInfo: (labels) => ipcRenderer.send('for-mark:set-locale-info', labels),
 })
