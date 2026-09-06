@@ -212,6 +212,30 @@ function renderTabs() {
     el.addEventListener('click', () => void activateTab(tab.id))
     bar.appendChild(el)
   }
+  // 标签后的「+」新建入口（点击标签栏空白区同样有效）
+  const plus = document.createElement('button')
+  plus.className = 'tab-new'
+  plus.textContent = '+'
+  plus.title = t('menu.newTab')
+  plus.addEventListener('click', () => void createNewTab())
+  bar.appendChild(plus)
+}
+
+/** 生成下一个可用的未命名标签名：未命名.md → 未命名-1.md → 未命名-2.md（按当前语言） */
+function nextUntitledName(): string {
+  const base = t('tab.untitled')
+  const stem = base.replace(/\.(md|markdown)$/i, '')
+  const ext = base.slice(stem.length)
+  const taken = new Set(tabs.map((tb) => tb.name))
+  if (!taken.has(base)) return base
+  let n = 1
+  while (taken.has(`${stem}-${n}${ext}`)) n++
+  return `${stem}-${n}${ext}`
+}
+
+function createNewTab() {
+  const created = newTab(nextUntitledName(), '')
+  void activateTab(created.id)
 }
 
 async function activateTab(id: string) {
@@ -252,7 +276,7 @@ async function closeTab(id: string) {
       editor?.destroy()
       editor = null
       pmView = null
-      newTab(t('tab.untitled'), '')
+      newTab(nextUntitledName(), '')
       await activateTab(tabs[0].id)
     }
   }
@@ -485,7 +509,7 @@ async function boot() {
     document.body.classList.toggle('dark', dark)
     setMermaidTheme(dark ? 'dark' : 'default')
 
-    const tab = newTab(t('tab.untitled'), loadDoc())
+    const tab = newTab(nextUntitledName(), loadDoc())
     activeTabId = tab.id
     editor = await createEditor(tab.markdown)
     editor.action((ctx) => {
@@ -537,6 +561,10 @@ async function boot() {
     })
 
     document.getElementById('open-folder-btn')?.addEventListener('click', () => void openFolder())
+    // 点击标签栏空白区新建标签
+    document.getElementById('tab-bar')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) createNewTab()
+    })
 
     document.getElementById('theme-toggle')?.addEventListener('click', async () => {
       const isDark = document.body.classList.toggle('dark')
@@ -560,8 +588,7 @@ async function boot() {
         void setSourceMode(!sourceMode)
       } else if (e.key === 't') {
         e.preventDefault()
-        const created = newTab(t('tab.untitled'), '')
-        void activateTab(created.id)
+        createNewTab()
       } else if (e.key === 'w') {
         e.preventDefault()
         if (activeTabId) void closeTab(activeTabId)
@@ -575,10 +602,7 @@ async function boot() {
         'open-folder': () => void openFolder(),
         save: () => void saveDocument(),
         'save-as': () => void saveDocument(true),
-        'new-tab': () => {
-          const created = newTab(t('tab.untitled'), '')
-          void activateTab(created.id)
-        },
+        'new-tab': () => createNewTab(),
         'close-tab': () => {
           if (activeTabId) void closeTab(activeTabId)
         },
