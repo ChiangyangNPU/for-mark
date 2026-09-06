@@ -10,7 +10,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "dist": "npm run build && electron-builder",
-    "dist:dir": "npm run build && electron-builder --dir",
+    "dist:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
     "dist:install": "npm run dist:dir && rm -rf /Applications/for-mark.app && cp -R release/mac-arm64/for-mark.app /Applications/"
   },
   "devDependencies": {
@@ -37,6 +37,9 @@
     "productName": "for-mark",
     "directories": {
       "output": "release"
+    },
+    "electronDownload": {
+      "mirror": "https://npmmirror.com/mirrors/electron/"
     },
     "files": [
       "dist/**",
