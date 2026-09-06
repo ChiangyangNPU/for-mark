@@ -10,7 +10,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "dist": "npm run build && electron-builder",
-    "dist:dir": "npm run build && electron-builder --dir"
+    "dist:dir": "npm run build && electron-builder --dir",
+    "dist:install": "npm run dist:dir && rm -rf /Applications/for-mark.app && cp -R release/mac-arm64/for-mark.app /Applications/"
   },
   "dependencies": {
     "@codemirror/lang-markdown": "^6.5.2",
@@ -41,6 +42,13 @@
     "files": [
       "dist/**",
       "electron/**"
+    ],
+    "fileAssociations": [
+      {
+        "ext": ["md", "markdown"],
+        "name": "Markdown 文档",
+        "role": "Editor"
+      }
     ],
     "mac": {
       "target": "dmg",

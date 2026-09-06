@@ -95,6 +95,11 @@ function updateTitle() {
   document.title = `${tab?.dirty ? '• ' : ''}${tab?.name ?? 'for-mark'} · for-mark`
 }
 
+/** 把任一标签页的未保存状态同步给 Electron 主进程（关闭确认用） */
+function notifyDirty() {
+  native?.setDirty(tabs.some((t) => t.dirty))
+}
+
 function activeTab(): DocTab | undefined {
   return tabs.find((t) => t.id === activeTabId)
 }
@@ -182,6 +187,7 @@ function newTab(name: string, markdown: string, path?: string): DocTab {
 }
 
 function renderTabs() {
+  notifyDirty()
   const bar = document.getElementById('tab-bar')
   if (!bar) return
   bar.textContent = ''
@@ -524,6 +530,8 @@ async function boot() {
       autosaveEnabled = enabled
       if (enabled) scheduleAutosave()
     })
+    // 文件关联：Finder 双击 / 系统打开方式
+    native?.onOpenPath((path) => void openPath(path))
 
     // 自动保存：开启后每 5 秒把脏标签页写回文件
     function scheduleAutosave() {
@@ -535,14 +543,8 @@ async function boot() {
       }, 5000)
     }
 
-    // 未保存关闭确认
-    window.addEventListener('beforeunload', (e) => {
-      const dirtyTab = tabs.some((t) => t.dirty)
-      if (dirtyTab && !window.confirm('有未保存的修改，确定关闭吗？')) {
-        e.preventDefault()
-        e.returnValue = false
-      }
-    })
+    // 未保存关闭确认已移到 Electron 主进程（close 事件 + 原生对话框），
+    // 渲染层的 beforeunload/confirm 在 Electron 关闭流程中不可靠
 
     wireFindBar()
     renderFilesSidebar()

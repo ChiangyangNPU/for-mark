@@ -156,7 +156,7 @@ class MermaidView implements NodeView {
     this.timer = window.setTimeout(() => void this.renderNow(code), RENDER_DEBOUNCE_MS)
   }
 
-  private async renderNow(code: string) {
+  private async renderNow(code: string, retry = 0) {
     this.lastCode = code
     const seq = ++this.renderSeq
 
@@ -176,8 +176,17 @@ class MermaidView implements NodeView {
       this.errorTip.hidden = true
     } catch (err) {
       if (seq !== this.renderSeq) return
+      const message = err instanceof Error ? err.message : String(err)
+      // mermaid 图表类型按需懒加载：冷启动立刻渲染会因模块未就绪而报
+      // "No diagram type detected"，短暂等待后重试即可恢复
+      if (retry < 3 && message.includes('No diagram type detected')) {
+        window.setTimeout(() => {
+          if (seq === this.renderSeq && this.lastCode === code) void this.renderNow(code, retry + 1)
+        }, 400 * (retry + 1))
+        return
+      }
       // 语法错误时保留上一次成功的图，只显示错误提示
-      this.errorTip.textContent = `Mermaid 语法有误：${err instanceof Error ? err.message : String(err)}`
+      this.errorTip.textContent = `Mermaid 语法有误：${message}`
       this.errorTip.hidden = false
     }
   }

@@ -15,11 +15,17 @@ contextBridge.exposeInMainWorld('forMarkAPI', {
   saveFileAs: (content) => ipcRenderer.invoke('for-mark:save-file-as', content),
   exportAs: (options) => ipcRenderer.invoke('for-mark:export-as', options),
   print: () => ipcRenderer.invoke('for-mark:print'),
+  /** 向主进程同步未保存状态（用于关闭确认） */
+  setDirty: (dirty) => ipcRenderer.send('for-mark:set-dirty', dirty),
   onMenu: (callback) => {
     ipcRenderer.on('for-mark:menu', (_event, action) => callback(action))
   },
   /** 自动保存开关（菜单 checkbox 切换） */
   onAutosave: (callback) => {
     ipcRenderer.on('for-mark:autosave', (_event, enabled) => callback(enabled))
+  },
+  /** 文件关联：Finder 双击 .md / 系统打开方式传入的文件路径 */
+  onOpenPath: (callback) => {
+    ipcRenderer.on('for-mark:open-path', (_event, filePath) => callback(filePath))
   },
 })

@@ -12,10 +12,23 @@ const DEV_SERVER_URL = process.env.ELECTRON_RENDERER_URL
 
 let mainWindow = null
 let autosaveMenuItem = null
+let rendererDirty = false
+
+// 文件关联：Finder 双击 .md 时 macOS 通过 open-file 事件传入路径；
+// 应用未就绪时先排队，窗口加载完成后再发给渲染层
+const pendingOpenPaths = []
 
 function sendToRenderer(channel, payload) {
   const win = mainWindow ?? BrowserWindow.getAllWindows()[0]
   win?.webContents.send(channel, payload)
+}
+
+function queueOpenPath(filePath) {
+  if (mainWindow && mainWindow.webContents.isLoading() === false) {
+    sendToRenderer('for-mark:open-path', filePath)
+  } else {
+    pendingOpenPaths.push(filePath)
+  }
 }
 
 function buildMenu() {
@@ -78,8 +91,38 @@ function createWindow() {
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
+
+  // 窗口加载完成后，把排队中的待打开文件发给渲染层
+  mainWindow.webContents.on('did-finish-load', () => {
+    while (pendingOpenPaths.length) {
+      sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+    }
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  // 未保存关闭确认：渲染层通过 IPC 同步脏标记，这里用原生对话框拦截关闭。
+  // 不能在渲染层用 window.confirm —— Electron 关闭流程中它不可靠，会导致窗口无法关闭。
+  mainWindow.on('close', (event) => {
+    if (!rendererDirty) return
+    event.preventDefault()
+    dialog
+      .showMessageBox(mainWindow, {
+        type: 'warning',
+        message: '有未保存的修改',
+        detail: '关闭前会丢失未保存的内容。',
+        buttons: ['放弃修改并关闭', '取消'],
+        defaultId: 0,
+        cancelId: 1,
+      })
+      .then(({ response }) => {
+        if (response === 0) {
+          rendererDirty = false
+          mainWindow?.destroy()
+        }
+      })
   })
 }
 
@@ -163,11 +206,42 @@ ipcMain.handle('for-mark:open-folder', async () => {
   return result.filePaths[0]
 })
 
+// 渲染层同步未保存状态
+ipcMain.on('for-mark:set-dirty', (_event, dirty) => {
+  rendererDirty = !!dirty
+})
+
 // ---------- 生命周期 ----------
+
+// 单实例：再次双击 .md / 启动应用时，把文件转交给已运行的实例
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+if (!gotSingleInstanceLock) {
+  app.quit()
+}
+
+app.on('second-instance', (_event, argv) => {
+  const filePath = argv.find((arg) => /\.(md|markdown)$/i.test(arg))
+  if (filePath) queueOpenPath(filePath)
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.focus()
+  }
+})
+
+// macOS：Finder 双击 / 系统打开方式
+app.on('open-file', (event, filePath) => {
+  event.preventDefault()
+  queueOpenPath(filePath)
+})
 
 app.whenReady().then(() => {
   buildMenu()
   createWindow()
+
+  // Windows：文件路径在启动参数里
+  const argvFile = process.argv.slice(1).find((arg) => /\.(md|markdown)$/i.test(arg))
+  if (argvFile) queueOpenPath(argvFile)
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

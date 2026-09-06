@@ -13,8 +13,12 @@ export interface NativeFileAPI {
   saveFileAs(content: string): Promise<{ path: string; name: string } | null>
   exportAs(options: { content: string; defaultName: string; filters: { name: string; extensions: string[] }[] }): Promise<{ path: string; name: string } | null>
   print(): Promise<boolean>
+  /** 向主进程同步未保存状态（用于关闭确认） */
+  setDirty(dirty: boolean): void
   onMenu(callback: (action: string) => void): void
   onAutosave(callback: (enabled: boolean) => void): void
+  /** 文件关联：Finder 双击 .md / 系统打开方式传入的文件路径 */
+  onOpenPath(callback: (filePath: string) => void): void
 }
 
 declare global {
