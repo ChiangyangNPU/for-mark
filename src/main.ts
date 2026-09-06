@@ -254,8 +254,9 @@ async function activateTab(id: string) {
 async function closeTab(id: string) {
   const tab = tabs.find((t) => t.id === id)
   if (!tab) return
-  const liveDirty = tab.id === activeTabId ? currentMarkdown() !== tab.markdown : tab.dirty
-  if (liveDirty && !window.confirm(t('dialog.closeConfirm', { name: tab.name }))) return
+  // 脏标记由编辑事件维护（仅真实编辑会置位），不要用序列化内容反比——
+  // markdown 序列化会规范化文本（尾随空格、列表标记等），未修改的文档也会被判为已修改
+  if (tab.dirty && !window.confirm(t('dialog.closeConfirm', { name: tab.name }))) return
 
   const index = tabs.indexOf(tab)
   tabs.splice(index, 1)
