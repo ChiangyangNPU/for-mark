@@ -190,6 +190,13 @@ html.mac .toolbar {
 
 /* ---------------- 页面 ---------------- */
 
+/* 滚动发生在全宽包装层上，滚动条贴窗口最右；.page 只负责内容居中排版 */
+.page-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .page {
   /* width:100% 防止 flex 容器中 margin:auto 导致的"随内容收缩"塌陷：
      空文档时编辑器宽度会变成 0，点击无法聚焦 */
@@ -467,11 +474,6 @@ img {
 
 .tab-close:hover {
   color: var(--error-fg);
-}
-
-.page {
-  flex: 1;
-  overflow-y: auto;
 }
 
 #src-editor {
