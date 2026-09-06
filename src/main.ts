@@ -324,7 +324,7 @@ async function openFromData(data: { path?: string; name: string; content: string
   // 唯一的"未命名"空白标签页 → 原地替换，避免启动时残留空标签
   if (tabs.length === 1) {
     const only = tabs[0]
-    if (!only.path && only.name === t('tab.untitled') && !only.dirty && currentMarkdown() === only.markdown) {
+    if (!only.path && only.name === t('tab.untitled') && !only.dirty) {
       only.path = data.path
       only.name = data.name
       only.markdown = data.content
@@ -561,8 +561,8 @@ async function boot() {
     })
 
     document.getElementById('open-folder-btn')?.addEventListener('click', () => void openFolder())
-    // 点击标签栏空白区新建标签
-    document.getElementById('tab-bar')?.addEventListener('click', (e) => {
+    // 双击标签栏空白区新建标签（单击保留给未来的其他交互）
+    document.getElementById('tab-bar')?.addEventListener('dblclick', (e) => {
       if (e.target === e.currentTarget) createNewTab()
     })
 

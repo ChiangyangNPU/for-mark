@@ -59,6 +59,9 @@ body {
   border-bottom: 1px solid var(--border);
   /* 隐藏标题栏后，整条工具栏可作为拖拽区移动窗口 */
   -webkit-app-region: drag;
+  /* UI 控件不参与文本选择（双击不会选中文件名） */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* 按钮和计数不参与拖拽，保证可点击 */
@@ -441,6 +444,9 @@ img {
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   min-height: 34px;
+  /* 双击空白区新建时不应选中文本 */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .tab {
