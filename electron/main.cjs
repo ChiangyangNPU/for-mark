@@ -34,8 +34,9 @@ let menuLabels = { ...DEFAULT_MENU_LABELS }
 const L = (key) => menuLabels[key] ?? DEFAULT_MENU_LABELS[key]
 
 // 文件关联：Finder 双击 .md 时 macOS 通过 open-file 事件传入路径；
-// 应用未就绪时先排队，窗口加载完成后再发给渲染层
+// 渲染层未就绪时先排队，收到 ready 信号后再发给渲染层
 const pendingOpenPaths = []
+let rendererReady = false
 
 function sendToRenderer(channel, payload) {
   const win = mainWindow ?? BrowserWindow.getAllWindows()[0]
@@ -43,7 +44,7 @@ function sendToRenderer(channel, payload) {
 }
 
 function queueOpenPath(filePath) {
-  if (mainWindow && mainWindow.webContents.isLoading() === false) {
+  if (rendererReady && mainWindow) {
     sendToRenderer('for-mark:open-path', filePath)
   } else {
     pendingOpenPaths.push(filePath)
@@ -121,8 +122,10 @@ function createWindow() {
 
   // 窗口加载完成后，把排队中的待打开文件发给渲染层
   mainWindow.webContents.on('did-finish-load', () => {
-    while (pendingOpenPaths.length) {
-      sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+    if (rendererReady) {
+      while (pendingOpenPaths.length) {
+        sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+      }
     }
   })
 
@@ -236,6 +239,14 @@ ipcMain.handle('for-mark:open-folder', async () => {
 // 渲染层同步未保存状态
 ipcMain.on('for-mark:set-dirty', (_event, dirty) => {
   rendererDirty = !!dirty
+})
+
+// 渲染层就绪：补发排队中的待打开文件
+ipcMain.on('for-mark:ready', () => {
+  rendererReady = true
+  while (pendingOpenPaths.length) {
+    sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+  }
 })
 
 // 渲染层把当前语言的菜单文案发来，重建菜单

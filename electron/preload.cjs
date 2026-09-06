@@ -30,4 +30,6 @@ contextBridge.exposeInMainWorld('forMarkAPI', {
   },
   /** 把当前语言的菜单文案发给主进程重建菜单 */
   setLocaleInfo: (labels) => ipcRenderer.send('for-mark:set-locale-info', labels),
+  /** 渲染层就绪信号：主进程补发排队中的待打开文件 */
+  ready: () => ipcRenderer.send('for-mark:ready'),
 })

@@ -240,7 +240,15 @@ async function closeTab(id: string) {
     const next = tabs[Math.min(index, tabs.length - 1)]
     if (next) {
       await activateTab(next.id)
+    } else if (native) {
+      // 最后一个标签页已关闭：直接关窗口（Mac 惯例，应用留在后台）
+      editor?.destroy()
+      editor = null
+      pmView = null
+      window.close()
+      return
     } else {
+      // 浏览器模式：window.close 无效，退回新建空白页
       editor?.destroy()
       editor = null
       pmView = null
@@ -288,6 +296,19 @@ async function openFromData(data: { path?: string; name: string; content: string
       return
     }
     pushRecent(data.path, data.name)
+  }
+  // 唯一的"未命名"空白标签页 → 原地替换，避免启动时残留空标签
+  if (tabs.length === 1) {
+    const only = tabs[0]
+    if (!only.path && only.name === t('tab.untitled') && !only.dirty && currentMarkdown() === only.markdown) {
+      only.path = data.path
+      only.name = data.name
+      only.markdown = data.content
+      await replaceEditor(data.content)
+      renderTabs()
+      updateTitle()
+      return
+    }
   }
   const tab = newTab(data.name, data.content, data.path)
   await activateTab(tab.id)
@@ -588,6 +609,8 @@ async function boot() {
 
     wireFindBar()
     renderFilesSidebar()
+    // 就绪信号：主进程补发排队中的待打开文件
+    native?.ready()
   } catch (err) {
     const tip = document.createElement('pre')
     tip.style.cssText = 'color:#d1242f;padding:16px;white-space:pre-wrap'

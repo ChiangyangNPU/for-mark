@@ -21,6 +21,8 @@ export interface NativeFileAPI {
   onOpenPath(callback: (filePath: string) => void): void
   /** 把当前语言的菜单栏文案发给主进程重建菜单 */
   setLocaleInfo(labels: Record<string, string>): void
+  /** 渲染层就绪信号：主进程补发排队中的待打开文件 */
+  ready(): void
 }
 
 declare global {
