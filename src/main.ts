@@ -84,6 +84,8 @@ interface DocTab {
   /** 打开/保存时的基准内容，用于判断是否有未保存修改 */
   markdown: string
   dirty: boolean
+  /** 标记该标签是启动时从 localStorage 恢复的上次未保存内容（不可被"打开文件"原地替换） */
+  recovered?: boolean
 }
 
 /** 全部打开的标签页（有序） */
@@ -109,11 +111,6 @@ let autosaveTimer: number | undefined
 // ---------------------------------------------------------------------------
 // 基础工具
 // ---------------------------------------------------------------------------
-
-/** 读取上次会话遗留的文档内容；无则返回演示文档 */
-function loadDoc(): string {
-  return localStorage.getItem(DOC_KEY) ?? DEMO_DOC
-}
 
 /** 文档内容写入 localStorage（崩溃/误关兜底，与磁盘保存无关） */
 function saveDoc(markdown: string) {
@@ -386,17 +383,18 @@ async function openFromData(data: { path?: string; name: string; content: string
     pushRecent(data.path, data.name)
   }
   // 唯一的"未命名"空白标签页 → 原地替换，避免启动时残留空标签
-  if (tabs.length === 1) {
-    const only = tabs[0]
-    if (!only.path && only.name === t('tab.untitled') && !only.dirty) {
-      only.path = data.path
-      only.name = data.name
-      only.markdown = data.content
-      await replaceEditor(data.content)
-      renderTabs()
-      updateTitle()
-      return
-    }
+  // 替换对象：任意"空白新建标签"（无路径、无修改、内容为空、非恢复内容）；
+  // 恢复出来的未保存内容带 recovered 标记，不会被打开的文件覆盖
+  const blankIdx = tabs.findIndex((t) => !t.path && !t.recovered && !t.dirty && t.markdown === '')
+  if (blankIdx !== -1) {
+    const only = tabs[blankIdx]
+    only.path = data.path
+    only.name = data.name
+    only.markdown = data.content
+    await replaceEditor(data.content)
+    renderTabs()
+    updateTitle()
+    return
   }
   const tab = newTab(data.name, data.content, data.path)
   await activateTab(tab.id)
@@ -433,6 +431,8 @@ async function saveDocument(saveAs = false) {
     URL.revokeObjectURL(url)
   }
   tab.dirty = false
+  // 已无未保存内容时清除恢复副本，避免下次启动"复活"已保存的旧文档
+  if (!tabs.some((t) => t.dirty)) localStorage.removeItem(DOC_KEY)
   renderTabs()
   updateTitle()
 }
@@ -624,7 +624,9 @@ async function boot() {
     document.body.classList.toggle('dark', dark)
     setMermaidTheme(dark ? 'dark' : 'default')
 
-    const tab = newTab(nextUntitledName(), loadDoc())
+    const restored = localStorage.getItem(DOC_KEY)
+    const tab = newTab(nextUntitledName(), restored ?? DEMO_DOC)
+    if (restored != null) tab.recovered = true // 恢复副本：不可被"打开文件"原地替换
     activeTabId = tab.id
     editor = await createEditor(tab.markdown)
     editor.action((ctx) => {
@@ -754,6 +756,10 @@ async function boot() {
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()
+    // 干净退出（无未保存内容）时清除恢复副本，下次启动呈现全新页面而非旧稿
+    window.addEventListener('beforeunload', () => {
+      if (!tabs.some((t) => t.dirty)) localStorage.removeItem(DOC_KEY)
+    })
   } catch (err) {
     // 启动失败时把错误显示出来，方便开发期排查
     const tip = document.createElement('pre')
