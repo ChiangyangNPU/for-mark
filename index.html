@@ -13,16 +13,55 @@
       <button id="source-mode-btn" class="tool-btn" data-i18n="toolbar.sourceMode" data-i18n-title="toolbar.sourceModeTitle">源码</button>
       <button id="import-btn" class="tool-btn" data-i18n="toolbar.open" data-i18n-title="toolbar.openTitle">打开</button>
       <button id="export-btn" class="tool-btn" data-i18n="toolbar.save" data-i18n-title="toolbar.saveTitle">保存</button>
-      <button id="more-btn" class="tool-btn" title="更多">⋯</button>
+      <button id="more-btn" class="tool-btn" data-i18n-title="toolbar.more">⋯</button>
       <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">🌙</button>
     </header>
 
     <div id="more-menu" class="more-menu" hidden>
       <button id="menu-files-btn" class="menu-item" data-i18n="toolbar.files">文件</button>
       <button id="menu-find-btn" class="menu-item" data-i18n="toolbar.find">查找</button>
-      <button id="menu-export-html-btn" class="menu-item">导出 HTML</button>
+      <button id="menu-export-html-btn" class="menu-item" data-i18n="menu.exportHtml">导出 HTML…</button>
       <div class="menu-sep"></div>
-      <button id="menu-settings-btn" class="menu-item">设置</button>
+      <button id="menu-settings-btn" class="menu-item" data-i18n="toolbar.settings">设置</button>
+    </div>
+
+    <div id="settings-overlay" class="settings-overlay" hidden>
+      <div class="settings-modal">
+        <div class="settings-header">
+          <span class="settings-title" data-i18n="settings.title">设置</span>
+          <button id="settings-close" class="theme-toggle" data-i18n-title="settings.close">✕</button>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.language">界面语言</div>
+          <label class="settings-option"><input type="radio" name="set-lang" value="zh-CN" /><span>中文</span></label>
+          <label class="settings-option"><input type="radio" name="set-lang" value="en" /><span>English</span></label>
+          <div class="settings-hint" data-i18n="settings.languageHint">切换后立即生效</div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.theme">主题外观</div>
+          <label class="settings-option"><input type="radio" name="set-theme" value="light" /><span data-i18n="settings.themeLight">浅色</span></label>
+          <label class="settings-option"><input type="radio" name="set-theme" value="dark" /><span data-i18n="settings.themeDark">深色</span></label>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-label">
+            <label class="settings-option">
+              <input type="checkbox" id="set-autosave" />
+              <span data-i18n="settings.autosave">自动保存到文件</span>
+            </label>
+          </div>
+          <div class="settings-hint" data-i18n="settings.autosaveHint">每 5 秒将已保存过的文件自动写回磁盘（桌面版可用）</div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.imageStrategy">粘贴图片存储方式</div>
+          <label class="settings-option"><input type="radio" name="set-img" value="inline" /><span data-i18n="settings.imageInline">内联到文档（data URL，无需保存文件）</span></label>
+          <label class="settings-option"><input type="radio" name="set-img" value="assets" /><span data-i18n="settings.imageAssets">保存到文档同目录 assets/ 文件夹（需先将文档保存）</span></label>
+          <div class="settings-hint" data-i18n="settings.imageAssetsHint">选择 assets 模式时，未保存过的文档会自动降级为内联模式</div>
+        </div>
+      </div>
     </div>
 
     <div id="find-bar" class="find-bar" hidden>

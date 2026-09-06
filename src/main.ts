@@ -30,7 +30,10 @@ import { exportHtml, exportPdf } from './export'
 import { createSourceEditor } from './sourcemode'
 import { renderFileTree, renderRecent, type FileEntry } from './filetree'
 import { native } from './native'
-import { t, applyDomTexts, menuLabels } from './i18n'
+import { t, applyDomTexts, menuLabels, getLocale, setLocale } from './i18n'
+import { setImagePasteContext, type ImageStrategy } from './paste-image'
+import { setImageBaseDir, imageSrcResolver } from './image-resolver'
+
 
 // ---------------------------------------------------------------------------
 // 本地存储键与应用常量
@@ -42,6 +45,8 @@ const DOC_KEY = 'for-mark:doc:v1'
 const THEME_KEY = 'for-mark:theme'
 /** localStorage：最近打开文件列表 */
 const RECENT_KEY = 'for-mark:recent'
+/** localStorage：粘贴图片存储策略（inline / assets） */
+const IMAGE_STRATEGY_KEY = 'for-mark:img'
 
 /** 首次启动（无本地文档）时展示的演示内容 */
 const DEMO_DOC = `# for-mark 编辑器
@@ -100,8 +105,10 @@ let pmView: EditorView | null = null
 let sourceMode = false
 /** 源码模式下的 CodeMirror 实例（仅源码模式期间存在） */
 let cmView: { destroy(): void; state: { doc: { toString(): string } } } | null = null
-/** 自动保存开关（菜单切换，默认关闭） */
+/** 自动保存开关（菜单/设置面板同步，默认关闭） */
 let autosaveEnabled = false
+/** 粘贴图片存储策略（设置面板配置） */
+let imageStrategy: ImageStrategy = (localStorage.getItem(IMAGE_STRATEGY_KEY) as ImageStrategy) ?? 'inline'
 /** 已打开的文件夹树（文件树侧边栏数据） */
 let folderTree: { path: string; name: string; children: FileEntry[] } | null = null
 
@@ -123,13 +130,21 @@ function updateWordCount(markdown: string) {
   if (el) el.textContent = t('editor.wordCount', { count: markdown.replace(/\s/g, '').length })
 }
 
-/** 同步窗口标题（居中文件名 + 未保存圆点标记） */
+/** 同步窗口标题（居中文件名 + 未保存圆点标记）并更新图片显示目录 */
 function updateTitle() {
   const tab = activeTab()
   const text = `${tab?.dirty ? '• ' : ''}${tab?.name ?? t('tab.untitled')}`
   document.title = text
   const el = document.getElementById('win-title')
   if (el) el.textContent = text
+  // 相对路径图片的显示解析目录跟随当前文档位置
+  setImageBaseDir(tab?.path ? dirName(tab.path) : null)
+}
+
+/** 取路径的目录部分（兼容 / 与 \ 分隔符） */
+function dirName(p: string): string {
+  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'))
+  return i > 0 ? p.slice(0, i) : p
 }
 
 /** 获取当前激活的标签页数据 */
@@ -200,6 +215,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(math)
     .use(pasteImage)
     .use(findPlugin)
+    .use(imageSrcResolver)
     .create()
 }
 
@@ -251,7 +267,7 @@ function renderTabs() {
     const close = document.createElement('button')
     close.className = 'tab-close'
     close.textContent = '✕'
-    close.title = '关闭标签页'
+    close.title = t('menu.closeTab')
     close.addEventListener('click', (e) => {
       e.stopPropagation()
       void closeTab(tab.id)
@@ -581,15 +597,55 @@ function closeMoreMenu() {
   if (menu) menu.hidden = true
 }
 
-/** 底部轻提示（2 秒自动消失），用于设置占位等临时反馈 */
-function showToast(text: string) {
-  document.getElementById('toast')?.remove()
-  const el = document.createElement('div')
-  el.id = 'toast'
-  el.className = 'toast'
-  el.textContent = text
-  document.body.appendChild(el)
-  window.setTimeout(() => el.remove(), 2000)
+/** 应用主题：CSS 变量切换 + mermaid 主题切换 + 重建编辑器重渲染图表 */
+let themeApplying: Promise<void> = Promise.resolve()
+function applyTheme(isDark: boolean): Promise<void> {
+  // 串行化：快速连续切换时避免异步重建互相踩踏（产生多个编辑器实例）
+  themeApplying = themeApplying
+    .then(() => doApplyTheme(isDark))
+    .catch((err) => console.error('[for-mark] 主题切换失败', err))
+  return themeApplying
+}
+
+async function doApplyTheme(isDark: boolean) {
+  document.body.classList.toggle('dark', isDark)
+  localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
+  const button = document.getElementById('theme-toggle')
+  if (button) button.textContent = isDark ? '☀️' : '🌙'
+  setMermaidTheme(isDark ? 'dark' : 'default')
+  // mermaid 主题固化在 SVG 里，重建编辑器重渲染所有图表
+  const markdown = currentMarkdown()
+  await replaceEditor(markdown)
+}
+
+// ---------------------------------------------------------------------------
+// 设置面板
+// ---------------------------------------------------------------------------
+
+/** 打开设置面板并反映当前配置值 */
+function openSettings() {
+  const overlay = document.getElementById('settings-overlay')
+  if (!overlay) return
+
+  const langRadio = overlay.querySelector(`input[name="set-lang"][value="${getLocale()}"]`) as HTMLInputElement | null
+  if (langRadio) langRadio.checked = true
+  const isDark = document.body.classList.contains('dark')
+  const themeRadio = overlay.querySelector(`input[name="set-theme"][value="${isDark ? 'dark' : 'light'}"]`) as HTMLInputElement | null
+  if (themeRadio) themeRadio.checked = true
+  const autosaveBox = document.getElementById('set-autosave') as HTMLInputElement | null
+  if (autosaveBox) {
+    autosaveBox.checked = autosaveEnabled && !!native
+    autosaveBox.disabled = !native
+  }
+  const imgRadio = overlay.querySelector(`input[name="set-img"][value="${imageStrategy}"]`) as HTMLInputElement | null
+  if (imgRadio) imgRadio.checked = true
+
+  overlay.hidden = false
+}
+
+/** 关闭设置面板 */
+function closeSettings() {
+  document.getElementById('settings-overlay')?.setAttribute('hidden', '')
 }
 
 /** 切换侧边栏面板（大纲 / 文件二选一，互斥展开收起） */
@@ -660,10 +716,6 @@ async function boot() {
       void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled'))
       closeMoreMenu()
     })
-    document.getElementById('menu-settings-btn')?.addEventListener('click', () => {
-      closeMoreMenu()
-      showToast('设置功能开发中，敬请期待')
-    })
     document.getElementById('more-btn')?.addEventListener('click', (e) => {
       e.stopPropagation()
       const menu = document.getElementById('more-menu')
@@ -685,23 +737,63 @@ async function boot() {
       if (e.target === e.currentTarget) createNewTab()
     })
 
-    document.getElementById('theme-toggle')?.addEventListener('click', async () => {
-      const isDark = document.body.classList.toggle('dark')
-      localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
-      const button = document.getElementById('theme-toggle')
-      if (button) button.textContent = isDark ? '☀️' : '🌙'
+    document.getElementById('theme-toggle')?.addEventListener('click', () => {
+      void applyTheme(!document.body.classList.contains('dark'))
+    })
 
-      // mermaid 主题在渲染时固化在 SVG 里，切换主题需要重渲染所有图表块；
-      // v0.1 的简化实现：重建编辑器
-      setMermaidTheme(isDark ? 'dark' : 'default')
-      const markdown = currentMarkdown()
-      await editor?.destroy()
-      editor = await createEditor(markdown)
+    // 设置面板
+    document.getElementById('menu-settings-btn')?.addEventListener('click', () => {
+      closeMoreMenu()
+      openSettings()
+    })
+    document.getElementById('settings-close')?.addEventListener('click', closeSettings)
+    document.getElementById('settings-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeSettings()
+    })
+    document.querySelectorAll('input[name="set-lang"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        setLocale((input as HTMLInputElement).value)
+        applyDomTexts()
+        renderTabs()
+        updateTitle()
+        updateWordCount(currentMarkdown())
+        native?.setLocaleInfo(menuLabels())
+      })
+    })
+    document.querySelectorAll('input[name="set-theme"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        void applyTheme((input as HTMLInputElement).value === 'dark')
+      })
+    })
+    document.getElementById('set-autosave')?.addEventListener('change', (e) => {
+      const enabled = (e.target as HTMLInputElement).checked
+      autosaveEnabled = enabled
+      native?.setAutosaveEnabled(enabled)
+      if (enabled) scheduleAutosave()
+      else window.clearInterval(autosaveTimer)
+    })
+    document.querySelectorAll('input[name="set-img"]').forEach((input) => {
+      input.addEventListener('change', () => {
+        imageStrategy = (input as HTMLInputElement).value as ImageStrategy
+        localStorage.setItem(IMAGE_STRATEGY_KEY, imageStrategy)
+      })
+    })
+
+    // 粘贴图片上下文：策略来自设置，目录来自当前标签页路径
+    setImagePasteContext({
+      getStrategy: () => imageStrategy,
+      getBaseDir: () => {
+        const t = activeTab()
+        return t?.path ? dirName(t.path) : null
+      },
     })
 
     // 快捷键（源码模式下 F 键交给 CodeMirror）
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeMoreMenu()
+      if (e.key === 'Escape') {
+        closeMoreMenu()
+        closeSettings()
+      }
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
       if (e.key === 'f' && !sourceMode) {

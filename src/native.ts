@@ -28,6 +28,10 @@ export interface NativeFileAPI {
   setLocaleInfo(labels: Record<string, string>): void
   /** 渲染层就绪信号：主进程补发排队中的待打开文件 */
   ready(): void
+  /** 设置面板同步自动保存开关（保持与菜单勾选一致） */
+  setAutosaveEnabled(enabled: boolean): void
+  /** 粘贴图片落盘：写入 dir/assets/name，返回实际文件名 */
+  saveImage(options: { dir: string; name: string; base64: string }): Promise<{ name: string } | null>
 }
 
 declare global {

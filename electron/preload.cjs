@@ -35,4 +35,8 @@ contextBridge.exposeInMainWorld('forMarkAPI', {
   setLocaleInfo: (labels) => ipcRenderer.send('for-mark:set-locale-info', labels),
   /** 渲染层就绪信号：主进程补发排队中的待打开文件 */
   ready: () => ipcRenderer.send('for-mark:ready'),
+  /** 设置面板同步自动保存开关（保持与菜单勾选一致） */
+  setAutosaveEnabled: (enabled) => ipcRenderer.send('for-mark:set-autosave-enabled', enabled),
+  /** 粘贴图片落盘：写入文档同目录 assets/ 文件夹 */
+  saveImage: (options) => ipcRenderer.invoke('for-mark:save-image', options),
 })

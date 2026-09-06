@@ -248,6 +248,21 @@ ipcMain.on('for-mark:set-dirty', (_event, dirty) => {
   rendererDirty = !!dirty
 })
 
+// 设置面板同步自动保存开关（保持菜单勾选状态一致）
+ipcMain.on('for-mark:set-autosave-enabled', (_event, enabled) => {
+  autosaveEnabled = !!enabled
+  if (autosaveMenuItem) autosaveMenuItem.checked = autosaveEnabled
+})
+
+// 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）
+ipcMain.handle('for-mark:save-image', async (_event, { dir, name, base64 }) => {
+  const assetsDir = path.join(dir, 'assets')
+  await fs.mkdir(assetsDir, { recursive: true })
+  const filePath = path.join(assetsDir, name)
+  await fs.writeFile(filePath, Buffer.from(base64, 'base64'))
+  return { name }
+})
+
 // 渲染层就绪：补发排队中的待打开文件
 ipcMain.on('for-mark:ready', () => {
   rendererReady = true
