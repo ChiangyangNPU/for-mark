@@ -105,6 +105,9 @@ body {
 /* ---------------- 页面 ---------------- */
 
 .page {
+  /* width:100% 防止 flex 容器中 margin:auto 导致的"随内容收缩"塌陷：
+     空文档时编辑器宽度会变成 0，点击无法聚焦 */
+  width: 100%;
   max-width: 860px;
   margin: 0 auto;
   padding: 40px 32px 120px;
@@ -408,6 +411,11 @@ img {
   background: var(--toolbar-bg);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--border);
+}
+
+/* display:flex 会覆盖 hidden 属性的 UA 样式，必须显式关闭 */
+.find-bar[hidden] {
+  display: none;
 }
 
 .find-input {
