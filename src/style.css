@@ -202,6 +202,204 @@ img {
   max-width: 100%;
 }
 
+/* ---------------- 布局：侧边栏 / 标签栏 ---------------- */
+
+.workbench {
+  display: flex;
+  height: calc(100vh - 45px);
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--pre-bg);
+}
+
+.sidebar-panel {
+  padding: 12px;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tool-btn.small {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.outline-item {
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outline-item.level-2 {
+  padding-left: 20px;
+}
+
+.outline-item.level-3 {
+  padding-left: 32px;
+}
+
+.outline-item:hover,
+.tree-file:hover,
+.tree-folder:hover {
+  background: var(--code-bg);
+}
+
+.outline-empty {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 8px;
+}
+
+.tree-file,
+.tree-folder {
+  font-size: 13px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree-folder {
+  color: var(--accent);
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  padding: 4px 8px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  min-height: 34px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: var(--pre-bg);
+  border-color: var(--border);
+  color: var(--fg);
+}
+
+.tab-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+
+.tab-close:hover {
+  color: var(--error-fg);
+}
+
+.page {
+  flex: 1;
+  overflow-y: auto;
+}
+
+#src-editor {
+  padding: 24px 32px;
+  height: 100%;
+}
+
+#src-editor .cm-editor {
+  height: 100%;
+  font-size: 14px;
+}
+
+/* ---------------- 查找替换栏 ---------------- */
+
+.find-bar {
+  position: sticky;
+  top: 45px;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--toolbar-bg);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.find-input {
+  width: 160px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12px;
+}
+
+.find-count {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 36px;
+  text-align: center;
+}
+
+.find-hit {
+  background: rgba(255, 213, 0, 0.4);
+}
+
+body.dark .find-hit {
+  background: rgba(255, 213, 0, 0.25);
+}
+
+.find-current {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 2px;
+}
+
 /* ---------------- 代码块语法高亮（refractor/prism token） ---------------- */
 
 :root {
