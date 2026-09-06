@@ -1,5 +1,7 @@
 /**
  * 导出：HTML（独立文件，mermaid/katex 走 CDN，样式内联）与 PDF（系统打印）
+ *
+ * @author chiangyang
  */
 import MarkdownIt from 'markdown-it'
 import { native } from './native'

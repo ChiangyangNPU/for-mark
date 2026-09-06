@@ -3,6 +3,13 @@
  *
  * 职责：创建窗口、应用菜单（文件操作/导出快捷键）、通过 IPC 提供文件与目录读写。
  * 渲染层保持纯网页逻辑，所有 Node 能力都经由 preload 暴露的受控 API 访问。
+ *
+ * 模块结构：
+ * - 窗口与菜单生命周期（createWindow / buildMenu）
+ * - 文件与目录 IPC（open-file / read-file / read-dir / save-* / export-as / print）
+ * - 文件关联（open-file 事件 + 单实例锁，双击 .md 直接在本应用打开）
+ *
+ * @author chiangyang
  */
 const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron')
 const path = require('node:path')

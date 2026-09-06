@@ -1,5 +1,7 @@
 /**
  * 文件树 / 最近文件 渲染（数据来自 Electron IPC）
+ *
+ * @author chiangyang
  */
 import { t } from './i18n'
 

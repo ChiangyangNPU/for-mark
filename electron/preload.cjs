@@ -1,6 +1,9 @@
 /**
  * preload：向渲染层暴露类型安全的受控文件 API
  * 渲染层通过 window.forMarkAPI 使用，无 Node 权限直接暴露。
+ * 与 src/native.ts 中的 NativeFileAPI 接口一一对应。
+ *
+ * @author chiangyang
  */
 const { contextBridge, ipcRenderer } = require('electron')
 

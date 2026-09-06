@@ -1,5 +1,5 @@
 /**
- * Mermaid 实时渲染插件
+ * Mermaid 实时渲染插件（for-mark 核心特性）
  *
  * 组成：
  * 1. remark 转换：把 markdown 里的 ```mermaid 代码块转成内部 "mermaid" 节点
@@ -8,6 +8,8 @@
  * 3. 节点视图：光标不在块内时渲染 SVG；点击图表进入源码编辑；渲染失败保留旧图
  * 4. 输入规则：直接输入 ```mermaid 回车即可创建图表块
  * 5. 编辑态装饰：光标位于块内时显示源码、隐藏图表（Typora 行为）
+ *
+ * @author chiangyang
  */
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { Decoration, DecorationSet, type EditorView, type NodeView, type ViewMutationRecord } from '@milkdown/kit/prose/view'

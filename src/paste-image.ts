@@ -3,6 +3,8 @@
  *
  * v0.1 为网页验证阶段，图片以内联 data URL 保存；
  * 进入桌面版（v1.0）后应改为存入文档同目录 assets/ 并替换为相对路径。
+ *
+ * @author chiangyang
  */
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin } from '@milkdown/kit/prose/state'

@@ -1,5 +1,7 @@
 /**
  * 大纲面板：从文档收集标题（1-3 级），点击跳转到对应位置
+ *
+ * @author chiangyang
  */
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'

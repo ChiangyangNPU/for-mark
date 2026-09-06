@@ -1,3 +1,14 @@
+/**
+ * for-mark - 轻量跨平台 Markdown 所见即所得编辑器
+ *
+ * 应用启动入口：负责整体状态编排（标签页 / 脏标记 / 主题 / 语言），
+ * 以及各功能模块（编辑器、文件、查找、大纲、源码模式、导出）的装配与联动。
+ *
+ * 渲染层不含任何 Node/Electron API——系统能力统一经 src/native.ts 的
+ * 受控接口访问，保证同一份代码可同时运行在 Electron 与浏览器中。
+ *
+ * @author chiangyang
+ */
 import '@milkdown/kit/prose/view/style/prosemirror.css'
 import 'katex/dist/katex.min.css'
 import './style.css'
@@ -22,21 +33,17 @@ import { native } from './native'
 import { t, applyDomTexts, menuLabels } from './i18n'
 
 // ---------------------------------------------------------------------------
-// 状态
+// 本地存储键与应用常量
 // ---------------------------------------------------------------------------
 
+/** localStorage：自动保存的文档内容 */
 const DOC_KEY = 'for-mark:doc:v1'
+/** localStorage：主题偏好（dark / light） */
 const THEME_KEY = 'for-mark:theme'
+/** localStorage：最近打开文件列表 */
 const RECENT_KEY = 'for-mark:recent'
 
-interface DocTab {
-  id: string
-  path?: string
-  name: string
-  markdown: string
-  dirty: boolean
-}
-
+/** 首次启动（无本地文档）时展示的演示内容 */
 const DEMO_DOC = `# for-mark 编辑器
 
 所见即所得的 **Markdown** 编辑器，支持 \`mermaid\` 图表 *实时渲染*。
@@ -63,34 +70,63 @@ const app: string = 'for-mark'
 | 深色模式 | ✅ |
 `
 
+// ---------------------------------------------------------------------------
+// 应用状态
+// ---------------------------------------------------------------------------
+
+/** 打开的文档标签页：一个标签对应一份在编辑的文档 */
+interface DocTab {
+  id: string
+  /** 关联的磁盘文件绝对路径；未保存过的新文档为 undefined */
+  path?: string
+  /** 标签页展示名（文件名） */
+  name: string
+  /** 打开/保存时的基准内容，用于判断是否有未保存修改 */
+  markdown: string
+  dirty: boolean
+}
+
+/** 全部打开的标签页（有序） */
 const tabs: DocTab[] = []
+/** 当前激活标签页 id；切换标签时其余标签的内容暂存回各自 DocTab */
 let activeTabId: string | null = null
+/** 当前激活标签页对应的 Milkdown 编辑器实例 */
 let editor: Editor | null = null
+/** 当前激活标签页的 ProseMirror 视图（供大纲/查找等模块直接操作文档） */
 let pmView: EditorView | null = null
+/** 是否处于源码模式（CodeMirror 整篇编辑） */
 let sourceMode = false
+/** 源码模式下的 CodeMirror 实例（仅源码模式期间存在） */
 let cmView: { destroy(): void; state: { doc: { toString(): string } } } | null = null
+/** 自动保存开关（菜单切换，默认关闭） */
 let autosaveEnabled = false
+/** 已打开的文件夹树（文件树侧边栏数据） */
 let folderTree: { path: string; name: string; children: FileEntry[] } | null = null
 
+/** 自动保存定时器句柄 */
 let autosaveTimer: number | undefined
 
 // ---------------------------------------------------------------------------
 // 基础工具
 // ---------------------------------------------------------------------------
 
+/** 读取上次会话遗留的文档内容；无则返回演示文档 */
 function loadDoc(): string {
   return localStorage.getItem(DOC_KEY) ?? DEMO_DOC
 }
 
+/** 文档内容写入 localStorage（崩溃/误关兜底，与磁盘保存无关） */
 function saveDoc(markdown: string) {
   localStorage.setItem(DOC_KEY, markdown)
 }
 
+/** 刷新工具栏字数统计（去空白字符后的长度） */
 function updateWordCount(markdown: string) {
   const el = document.getElementById('word-count')
   if (el) el.textContent = t('editor.wordCount', { count: markdown.replace(/\s/g, '').length })
 }
 
+/** 同步窗口标题（居中文件名 + 未保存圆点标记） */
 function updateTitle() {
   const tab = activeTab()
   const text = `${tab?.dirty ? '• ' : ''}${tab?.name ?? t('tab.untitled')}`
@@ -99,15 +135,17 @@ function updateTitle() {
   if (el) el.textContent = text
 }
 
+/** 获取当前激活的标签页数据 */
+function activeTab(): DocTab | undefined {
+  return tabs.find((t) => t.id === activeTabId)
+}
+
 /** 把任一标签页的未保存状态同步给 Electron 主进程（关闭确认用） */
 function notifyDirty() {
   native?.setDirty(tabs.some((t) => t.dirty))
 }
 
-function activeTab(): DocTab | undefined {
-  return tabs.find((t) => t.id === activeTabId)
-}
-
+/** 读取最近打开文件列表（localStorage 持久化，最多 8 条） */
 function recentList(): { name: string; path: string }[] {
   try {
     return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]')
@@ -116,6 +154,7 @@ function recentList(): { name: string; path: string }[] {
   }
 }
 
+/** 记录一条最近打开文件并刷新侧边栏 */
 function pushRecent(path: string, name: string) {
   const list = recentList().filter((r) => r.path !== path)
   list.unshift({ path, name })
@@ -124,9 +163,16 @@ function pushRecent(path: string, name: string) {
 }
 
 // ---------------------------------------------------------------------------
-// 编辑器
+// 编辑器装配
 // ---------------------------------------------------------------------------
 
+/**
+ * 创建 Milkdown 编辑器实例并挂载到 #editor。
+ *
+ * 插件清单：commonmark（基础语法）、gfm（表格/任务列表）、history（撤销重做）、
+ * listener（内容监听）、mermaid（自研图表插件）、prism（代码高亮）、
+ * math（KaTeX 公式）、pasteImage（粘贴图片）、findPlugin（查找高亮）。
+ */
 async function createEditor(markdown: string): Promise<Editor> {
   return Editor.make()
     .config((ctx) => {
@@ -160,6 +206,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .create()
 }
 
+/** 销毁当前编辑器并用新文档重建（打开文件 / 切换标签 / 主题切换共用） */
 async function replaceEditor(markdown: string) {
   findClear(pmView)
   editor?.destroy()
@@ -173,6 +220,7 @@ async function replaceEditor(markdown: string) {
   setSourceMode(false, false)
 }
 
+/** 取当前编辑器内容的 markdown 文本（源码模式下取 CodeMirror 内容） */
 function currentMarkdown(): string {
   if (sourceMode && cmView) return cmView.state.doc.toString()
   return editor?.action(getMarkdown()) ?? ''
@@ -182,14 +230,17 @@ function currentMarkdown(): string {
 // 标签页
 // ---------------------------------------------------------------------------
 
+/** 标签页自增 id 计数 */
 let tabSeq = 0
 
+/** 创建一个标签页数据（不激活） */
 function newTab(name: string, markdown: string, path?: string): DocTab {
   const tab: DocTab = { id: `tab-${++tabSeq}`, name, markdown, dirty: false, path }
   tabs.push(tab)
   return tab
 }
 
+/** 重绘标签栏（含未保存圆点、激活高亮、关闭按钮）并同步脏状态到主进程 */
 function renderTabs() {
   notifyDirty()
   const bar = document.getElementById('tab-bar')
@@ -221,23 +272,7 @@ function renderTabs() {
   bar.appendChild(plus)
 }
 
-/** 生成下一个可用的未命名标签名：未命名.md → 未命名-1.md → 未命名-2.md（按当前语言） */
-function nextUntitledName(): string {
-  const base = t('tab.untitled')
-  const stem = base.replace(/\.(md|markdown)$/i, '')
-  const ext = base.slice(stem.length)
-  const taken = new Set(tabs.map((tb) => tb.name))
-  if (!taken.has(base)) return base
-  let n = 1
-  while (taken.has(`${stem}-${n}${ext}`)) n++
-  return `${stem}-${n}${ext}`
-}
-
-function createNewTab() {
-  const created = newTab(nextUntitledName(), '')
-  void activateTab(created.id)
-}
-
+/** 激活指定标签页：暂存当前标签内容 → 重建编辑器载入目标内容 */
 async function activateTab(id: string) {
   if (id === activeTabId) return
   const current = activeTab()
@@ -251,6 +286,31 @@ async function activateTab(id: string) {
   await replaceEditor(target.markdown)
 }
 
+/**
+ * 生成下一个可用的未命名标签名：未命名.md → 未命名-1.md → 未命名-2.md。
+ * 在已打开标签中查重；词干取自当前语言包（中文"未命名"/英文"Untitled"）。
+ */
+function nextUntitledName(): string {
+  const base = t('tab.untitled')
+  const stem = base.replace(/\.(md|markdown)$/i, '')
+  const ext = base.slice(stem.length)
+  const taken = new Set(tabs.map((tb) => tb.name))
+  if (!taken.has(base)) return base
+  let n = 1
+  while (taken.has(`${stem}-${n}${ext}`)) n++
+  return `${stem}-${n}${ext}`
+}
+
+/** 新建一个空白标签页并激活（工具栏「+」/ 空白区双击 / 快捷键 / 菜单共用） */
+function createNewTab() {
+  const created = newTab(nextUntitledName(), '')
+  void activateTab(created.id)
+}
+
+/**
+ * 关闭标签页。有未保存修改时弹确认；
+ * 关闭最后一个标签时直接关闭窗口（Mac 惯例：应用留在后台）。
+ */
 async function closeTab(id: string) {
   const tab = tabs.find((t) => t.id === id)
   if (!tab) return
@@ -285,16 +345,15 @@ async function closeTab(id: string) {
   updateTitle()
 }
 
-function isContentDirty(): boolean {
-  const tab = activeTab()
-  return !!tab && currentMarkdown() !== tab.markdown
-}
-void isContentDirty
-
 // ---------------------------------------------------------------------------
-// 文件操作
+// 文件操作（Electron 原生对话框 + 浏览器降级）
 // ---------------------------------------------------------------------------
 
+/**
+ * 打开文档：
+ * - Electron：原生文件选择对话框（自动去重已打开的同路径文件）
+ * - 浏览器：降级为 <input type="file">
+ */
 async function openDocument() {
   if (native) {
     const result = await native.openFile()
@@ -312,6 +371,10 @@ async function openDocument() {
   input.click()
 }
 
+/**
+ * 用读取到的文件数据打开文档：
+ * 同路径已打开 → 跳转既有标签；唯一的空白"未命名"标签 → 原地替换；否则新建标签。
+ */
 async function openFromData(data: { path?: string; name: string; content: string }) {
   // 已打开同一文件 → 跳到那个标签页
   if (data.path) {
@@ -339,6 +402,11 @@ async function openFromData(data: { path?: string; name: string; content: string
   await activateTab(tab.id)
 }
 
+/**
+ * 保存当前标签页：
+ * - 已关联磁盘文件 → 直接写回；未关联 → 弹"另存为"
+ * - 浏览器降级为下载 .md 文件
+ */
 async function saveDocument(saveAs = false) {
   const tab = activeTab()
   if (!tab) return
@@ -369,6 +437,7 @@ async function saveDocument(saveAs = false) {
   updateTitle()
 }
 
+/** 打开文件夹：读取目录树数据并渲染到文件树侧边栏（仅 Electron） */
 async function openFolder() {
   if (!native) return
   const dir = await native.openFolder()
@@ -381,12 +450,14 @@ async function openFolder() {
   renderFilesSidebar()
 }
 
+/** 按绝对路径打开文件（文件树 / 最近列表点击时） */
 async function openPath(path: string) {
   if (!native) return
   const result = await native.readFile(path)
   await openFromData(result)
 }
 
+/** 渲染文件树侧边栏（最近列表 + 文件夹树） */
 function renderFilesSidebar() {
   const recentEl = document.getElementById('recent-list')
   if (recentEl) renderRecent(recentEl, recentList(), (p) => void openPath(p))
@@ -398,9 +469,13 @@ function renderFilesSidebar() {
 }
 
 // ---------------------------------------------------------------------------
-// 源码模式
+// 源码模式（CodeMirror 6）
 // ---------------------------------------------------------------------------
 
+/**
+ * 切换 所见即所得 / 源码 模式。
+ * 进入时把 markdown 全文交给 CodeMirror；退出时取回全文重建编辑器。
+ */
 async function setSourceMode(on: boolean, syncContent = true) {
   const pmEl = document.getElementById('editor')
   const srcEl = document.getElementById('src-editor')
@@ -426,23 +501,26 @@ async function setSourceMode(on: boolean, syncContent = true) {
 }
 
 // ---------------------------------------------------------------------------
-// 查找替换（仅所见即所得模式）
+// 查找替换（仅所见即所得模式；源码模式用 CodeMirror 自带搜索）
 // ---------------------------------------------------------------------------
 
+/** 打开查找栏（源码模式下不打开，留给 CodeMirror 搜索） */
 function openFindBar() {
   const bar = document.getElementById('find-bar')
   if (!bar) return
-  if (sourceMode) return // 源码模式使用 CodeMirror 自带搜索
+  if (sourceMode) return
   bar.hidden = false
   ;(document.getElementById('find-input') as HTMLInputElement | null)?.focus()
 }
 
+/** 关闭查找栏并清除高亮 */
 function closeFindBar() {
   const bar = document.getElementById('find-bar')
   if (bar) bar.hidden = true
   findClear(sourceMode ? null : pmView)
 }
 
+/** 绑定查找栏的输入、上下跳转、替换单个/全部、关闭等交互 */
 function wireFindBar() {
   const findInput = document.getElementById('find-input') as HTMLInputElement | null
   const replaceInput = document.getElementById('replace-input') as HTMLInputElement | null
@@ -494,7 +572,43 @@ function wireFindBar() {
 }
 
 // ---------------------------------------------------------------------------
-// 启动
+// 侧边栏
+// ---------------------------------------------------------------------------
+
+/** 关闭 ⋯ 溢出菜单 */
+function closeMoreMenu() {
+  const menu = document.getElementById('more-menu')
+  if (menu) menu.hidden = true
+}
+
+/** 底部轻提示（2 秒自动消失），用于设置占位等临时反馈 */
+function showToast(text: string) {
+  document.getElementById('toast')?.remove()
+  const el = document.createElement('div')
+  el.id = 'toast'
+  el.className = 'toast'
+  el.textContent = text
+  document.body.appendChild(el)
+  window.setTimeout(() => el.remove(), 2000)
+}
+
+/** 切换侧边栏面板（大纲 / 文件二选一，互斥展开收起） */
+function toggleSidebar(which: 'outline' | 'files') {
+  const sidebar = document.getElementById('sidebar')
+  const outlinePanel = document.getElementById('outline-panel')
+  const filesPanel = document.getElementById('files-panel')
+  if (!sidebar || !outlinePanel || !filesPanel) return
+
+  const showOutline = which === 'outline'
+  const targetPanel = showOutline ? outlinePanel : filesPanel
+  const otherPanel = showOutline ? filesPanel : outlinePanel
+  otherPanel.hidden = true
+  targetPanel.hidden = !targetPanel.hidden
+  sidebar.hidden = targetPanel.hidden && otherPanel.hidden
+}
+
+// ---------------------------------------------------------------------------
+// 启动与全局装配
 // ---------------------------------------------------------------------------
 
 async function boot() {
@@ -526,8 +640,10 @@ async function boot() {
     // 工具栏
     document.getElementById('import-btn')?.addEventListener('click', () => void openDocument())
     document.getElementById('export-btn')?.addEventListener('click', () => void saveDocument())
+    document.getElementById('export-html-btn')?.addEventListener('click', () =>
+      void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
+    )
     document.getElementById('source-mode-btn')?.addEventListener('click', () => void setSourceMode(!sourceMode))
-    document.getElementById('sidebar-outline-btn')?.addEventListener('click', () => toggleSidebar('outline'))
 
     // ⋯ 溢出菜单
     document.getElementById('menu-files-btn')?.addEventListener('click', () => {
@@ -572,8 +688,13 @@ async function boot() {
       localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
       const button = document.getElementById('theme-toggle')
       if (button) button.textContent = isDark ? '☀️' : '🌙'
+
+      // mermaid 主题在渲染时固化在 SVG 里，切换主题需要重渲染所有图表块；
+      // v0.1 的简化实现：重建编辑器
       setMermaidTheme(isDark ? 'dark' : 'default')
-      await replaceEditor(currentMarkdown())
+      const markdown = currentMarkdown()
+      await editor?.destroy()
+      editor = await createEditor(markdown)
     })
 
     // 快捷键（源码模式下 F 键交给 CodeMirror）
@@ -629,48 +750,18 @@ async function boot() {
       }, 5000)
     }
 
-    // 未保存关闭确认已移到 Electron 主进程（close 事件 + 原生对话框），
-    // 渲染层的 beforeunload/confirm 在 Electron 关闭流程中不可靠
-
     wireFindBar()
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()
   } catch (err) {
+    // 启动失败时把错误显示出来，方便开发期排查
     const tip = document.createElement('pre')
     tip.style.cssText = 'color:#d1242f;padding:16px;white-space:pre-wrap'
     tip.textContent = t('boot.failed') + (err instanceof Error ? err.stack : String(err))
     document.body.appendChild(tip)
     throw err
   }
-}
-
-function closeMoreMenu() {
-  const menu = document.getElementById('more-menu')
-  if (menu) menu.hidden = true
-}
-
-function showToast(text: string) {
-  document.getElementById('toast')?.remove()
-  const el = document.createElement('div')
-  el.id = 'toast'
-  el.className = 'toast'
-  el.textContent = text
-  document.body.appendChild(el)
-  window.setTimeout(() => el.remove(), 2000)
-}
-
-function toggleSidebar(which: 'outline' | 'files') {  const sidebar = document.getElementById('sidebar')
-  const outlinePanel = document.getElementById('outline-panel')
-  const filesPanel = document.getElementById('files-panel')
-  if (!sidebar || !outlinePanel || !filesPanel) return
-
-  const showOutline = which === 'outline'
-  const targetPanel = showOutline ? outlinePanel : filesPanel
-  const otherPanel = showOutline ? filesPanel : outlinePanel
-  otherPanel.hidden = true
-  targetPanel.hidden = !targetPanel.hidden
-  sidebar.hidden = targetPanel.hidden && otherPanel.hidden
 }
 
 void boot()

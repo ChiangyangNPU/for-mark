@@ -3,6 +3,8 @@
  *
  * 通过 ProseMirror 装饰器高亮所有匹配项；不处理跨节点匹配（v1.0 的合理简化）。
  * 源码模式使用 CodeMirror 自带的搜索面板。
+ *
+ * @author chiangyang
  */
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin, TextSelection } from '@milkdown/kit/prose/state'

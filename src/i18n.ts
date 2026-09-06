@@ -5,6 +5,8 @@
  * - 默认语言跟随系统，localStorage 'for-mark:lang' 可覆盖
  * - 静态 HTML 文案通过 data-i18n（textContent）/ data-i18n-title /
  *   data-i18n-placeholder 属性批量替换；动态文案用 t()
+ *
+ * @author chiangyang
  */
 import zhCN from './locales/zh-CN.json'
 import en from './locales/en.json'
