@@ -9,7 +9,7 @@
     "dev:electron": "concurrently -k -s first \"vite\" \"wait-on tcp:127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "dist": "npm run build && electron-builder",
+    "dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "dist:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
     "dist:install": "npm run dist:dir && rm -rf /Applications/for-mark.app && cp -R release/mac-arm64/for-mark.app /Applications/"
   },
