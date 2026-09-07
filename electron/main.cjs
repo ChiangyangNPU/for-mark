@@ -103,7 +103,7 @@ function buildMenu() {
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 1000,
     height: 800,
     minWidth: 860,
     minHeight: 560,
