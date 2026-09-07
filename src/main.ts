@@ -47,6 +47,8 @@ const THEME_KEY = 'for-mark:theme'
 const RECENT_KEY = 'for-mark:recent'
 /** localStorage：粘贴图片存储策略（inline / assets） */
 const IMAGE_STRATEGY_KEY = 'for-mark:img'
+/** localStorage：自动保存开关（桌面版主进程菜单勾选的镜像） */
+const AUTOSAVE_KEY = 'for-mark:autosave'
 
 /** 首次启动（无本地文档）时展示的演示内容 */
 const DEMO_DOC = `# for-mark 编辑器
@@ -105,8 +107,8 @@ let pmView: EditorView | null = null
 let sourceMode = false
 /** 源码模式下的 CodeMirror 实例（仅源码模式期间存在） */
 let cmView: { destroy(): void; state: { doc: { toString(): string } } } | null = null
-/** 自动保存开关（菜单/设置面板同步，默认关闭） */
-let autosaveEnabled = false
+/** 自动保存开关（启动从 localStorage 恢复；菜单/设置面板双向同步） */
+let autosaveEnabled = localStorage.getItem(AUTOSAVE_KEY) === 'true'
 /** 粘贴图片存储策略（设置面板配置） */
 let imageStrategy: ImageStrategy = (localStorage.getItem(IMAGE_STRATEGY_KEY) as ImageStrategy) ?? 'inline'
 /** 已打开的文件夹树（文件树侧边栏数据） */
@@ -766,6 +768,7 @@ async function boot() {
     document.getElementById('set-autosave')?.addEventListener('change', (e) => {
       const enabled = (e.target as HTMLInputElement).checked
       autosaveEnabled = enabled
+      localStorage.setItem(AUTOSAVE_KEY, enabled ? 'true' : 'false')
       native?.setAutosaveEnabled(enabled)
       if (enabled) scheduleAutosave()
       else window.clearInterval(autosaveTimer)
@@ -825,13 +828,6 @@ async function boot() {
       }
       handlers[action]?.()
     })
-    native?.onAutosave((enabled) => {
-      autosaveEnabled = enabled
-      if (enabled) scheduleAutosave()
-    })
-    // 文件关联：Finder 双击 / 系统打开方式
-    native?.onOpenPath((path) => void openPath(path))
-
     // 自动保存：开启后每 5 秒把脏标签页写回文件
     function scheduleAutosave() {
       window.clearInterval(autosaveTimer)
@@ -842,12 +838,25 @@ async function boot() {
       }, 5000)
     }
 
+    // 启动同步：渲染层为 autosave 状态权威，恢复后通知主进程菜单对齐并按需起定时器
+    native?.setAutosaveEnabled(autosaveEnabled)
+    if (autosaveEnabled) scheduleAutosave()
+
+    native?.onAutosave((enabled) => {
+      autosaveEnabled = enabled
+      localStorage.setItem(AUTOSAVE_KEY, enabled ? 'true' : 'false')
+      if (enabled) scheduleAutosave()
+    })
+    // 文件关联：Finder 双击 / 系统打开方式
+    native?.onOpenPath((path) => void openPath(path))
+
     wireFindBar()
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()
-    // 干净退出（无未保存内容）时清除恢复副本，下次启动呈现全新页面而非旧稿
+    // 干净退出（无未保存内容）时清除恢复副本并停掉自动保存定时器
     window.addEventListener('beforeunload', () => {
+      window.clearInterval(autosaveTimer)
       if (!tabs.some((t) => t.dirty)) localStorage.removeItem(DOC_KEY)
     })
   } catch (err) {
