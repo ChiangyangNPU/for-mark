@@ -25,10 +25,10 @@ let autosaveEnabled = false
 // 菜单文案：默认中文，渲染层启动后把当前语言的文案经 IPC 发来并重建菜单
 const DEFAULT_MENU_LABELS = {
   file: '文件',
-  open: '打开…',
-  openFolder: '打开文件夹…',
+  open: '打开',
+  openFolder: '打开文件夹',
   save: '保存',
-  saveAs: '另存为…',
+  saveAs: '另存为',
   newTab: '新标签页',
   closeTab: '关闭标签页',
   autosave: '自动保存到文件',

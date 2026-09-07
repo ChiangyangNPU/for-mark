@@ -58,10 +58,10 @@
   },
   "menu": {
     "file": "File",
-    "open": "Open…",
-    "openFolder": "Open Folder…",
+    "open": "Open",
+    "openFolder": "Open Folder",
     "save": "Save",
-    "saveAs": "Save As…",
+    "saveAs": "Save As",
     "newTab": "New Tab",
     "closeTab": "Close Tab",
     "autosave": "Auto-save to File",
