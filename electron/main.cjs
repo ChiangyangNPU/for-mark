@@ -154,9 +154,18 @@ function createWindow() {
         defaultId: 0,
         cancelId: 1,
       })
-      .then(({ response }) => {
+      .then(async ({ response }) => {
         if (response === 0) {
           rendererDirty = false
+          // 用户明确放弃修改：绕过渲染层 beforeunload，需在主进程直接清除恢复副本，
+          // 否则下次启动会"复活"被放弃的内容（与"放弃修改"语义冲突）
+          try {
+            await mainWindow?.webContents.executeJavaScript(
+              "localStorage.removeItem('for-mark:doc:v1')",
+            )
+          } catch (err) {
+            console.warn('[for-mark] 清除恢复副本失败', err)
+          }
           mainWindow?.destroy()
         }
       })

@@ -50,32 +50,8 @@ const IMAGE_STRATEGY_KEY = 'for-mark:img'
 /** localStorage：自动保存开关（桌面版主进程菜单勾选的镜像） */
 const AUTOSAVE_KEY = 'for-mark:autosave'
 
-/** 首次启动（无本地文档）时展示的演示内容 */
-const DEMO_DOC = `# for-mark 编辑器
-
-所见即所得的 **Markdown** 编辑器，支持 \`mermaid\` 图表 *实时渲染*。
-
-## 流程图
-
-\`\`\`mermaid
-flowchart LR
-    A[输入 Markdown] --> B{包含 mermaid 块?}
-    B -- 是 --> C[实时渲染 SVG]
-    B -- 否 --> D[正常排版]
-\`\`\`
-
-\`\`\`ts
-// 代码块支持语法高亮
-const app: string = 'for-mark'
-\`\`\`
-
-公式：$E = mc^2$
-
-| 功能 | 状态 |
-| --- | --- |
-| Mermaid 实时渲染 | ✅ |
-| 深色模式 | ✅ |
-`
+/** 首次启动（无本地文档）时展示的初始内容（空文档，由用户自行输入） */
+const DEMO_DOC = ''
 
 // ---------------------------------------------------------------------------
 // 应用状态
