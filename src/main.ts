@@ -197,10 +197,25 @@ async function createEditor(markdown: string): Promise<Editor> {
     .create()
 }
 
-/** 销毁当前编辑器并用新文档重建（打开文件 / 切换标签 / 主题切换共用） */
-async function replaceEditor(markdown: string) {
+/**
+ * 销毁当前编辑器并用新文档重建（打开文件 / 切换标签 / 主题切换共用）。
+ * preserveScroll：重建前后内容相同（主题切换 / 退出源码模式）时保持滚动位置；
+ * 重建期间锁定 #editor 高度，防止内容塌陷导致滚动条闪烁、scrollTop 被归零。
+ * 新编辑器刚挂载时图片未解码、mermaid 未渲染，内容高度会先矮后高，
+ * 所以锁定要持续到内容高度补回原值为止，否则 scrollHeight 波动仍会闪滚动条。
+ */
+async function replaceEditor(markdown: string, preserveScroll = false) {
+  const scrollEl = document.querySelector('.page-scroll') as HTMLElement | null
+  const editorEl = document.getElementById('editor')
+  const prevTop = scrollEl?.scrollTop ?? 0
+  const prevHeight = editorEl?.offsetHeight ?? 0
+
+  if (preserveScroll && editorEl && prevHeight > 0) {
+    editorEl.style.minHeight = `${prevHeight}px`
+  }
+
   findClear(pmView)
-  editor?.destroy()
+  await editor?.destroy()
   editor = await createEditor(markdown)
   editor.action((ctx) => {
     pmView = ctx.get(editorViewCtx)
@@ -209,6 +224,21 @@ async function replaceEditor(markdown: string) {
   const list = document.getElementById('outline-list')
   if (list && pmView) renderOutline(list, collectOutline(pmView.state.doc), pmView)
   setSourceMode(false, false)
+
+  if (preserveScroll && editorEl) {
+    const inner = editorEl.firstElementChild as HTMLElement | null
+    const deadline = performance.now() + 1500
+    const unlock = () => {
+      const caughtUp = inner ? inner.offsetHeight >= prevHeight - 1 : true
+      if (!caughtUp && performance.now() < deadline) {
+        requestAnimationFrame(unlock)
+        return
+      }
+      editorEl.style.minHeight = ''
+      if (scrollEl) scrollEl.scrollTop = prevTop
+    }
+    requestAnimationFrame(unlock)
+  }
 }
 
 /** 取当前编辑器内容的 markdown 文本（源码模式下取 CodeMirror 内容） */
@@ -485,7 +515,7 @@ async function setSourceMode(on: boolean, syncContent = true) {
     const markdown = cmView.state.doc.toString()
     cmView.destroy()
     cmView = null
-    if (syncContent) await replaceEditor(markdown)
+    if (syncContent) await replaceEditor(markdown, true)
   }
 
   sourceMode = on
@@ -593,7 +623,7 @@ async function doApplyTheme(isDark: boolean) {
   setMermaidTheme(isDark ? 'dark' : 'default')
   // mermaid 主题固化在 SVG 里，重建编辑器重渲染所有图表
   const markdown = currentMarkdown()
-  await replaceEditor(markdown)
+  await replaceEditor(markdown, true)
 }
 
 // ---------------------------------------------------------------------------

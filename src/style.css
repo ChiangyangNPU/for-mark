@@ -1,4 +1,5 @@
 :root {
+  color-scheme: light;
   --bg: #ffffff;
   --fg: #24292f;
   --muted: #6a737d;
@@ -13,6 +14,8 @@
 }
 
 body.dark {
+  /* 原生控件（滚动条、单选框、复选框等）跟随主题渲染 */
+  color-scheme: dark;
   --bg: #1e2127;
   --fg: #d7dae0;
   --muted: #8a9099;
@@ -34,6 +37,9 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* 固定视口布局（工具栏+工作区=100vh），窗口级滚动条永不出现；
+     mermaid 渲染会临时往 body 挂 SVG 元素，溢出会被这里裁掉 */
+  overflow: hidden;
   background: var(--bg);
   color: var(--fg);
   font-family:
