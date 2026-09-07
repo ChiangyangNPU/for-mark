@@ -66,8 +66,8 @@
     "closeTab": "Close Tab",
     "autosave": "Auto-save to File",
     "export": "Export",
-    "exportHtml": "Export HTML…",
-    "exportPdf": "Print / Export PDF…"
+    "exportHtml": "Export HTML",
+    "exportPdf": "Print / Export PDF"
   },
   "settings": {
     "title": "Settings",

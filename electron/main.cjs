@@ -33,8 +33,8 @@ const DEFAULT_MENU_LABELS = {
   closeTab: '关闭标签页',
   autosave: '自动保存到文件',
   export: '导出',
-  exportHtml: '导出 HTML…',
-  exportPdf: '打印 / 导出 PDF…',
+  exportHtml: '导出 HTML',
+  exportPdf: '打印 / 导出 PDF',
 }
 let menuLabels = { ...DEFAULT_MENU_LABELS }
 
