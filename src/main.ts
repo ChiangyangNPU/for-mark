@@ -698,9 +698,6 @@ async function boot() {
     // 工具栏
     document.getElementById('import-btn')?.addEventListener('click', () => void openDocument())
     document.getElementById('export-btn')?.addEventListener('click', () => void saveDocument())
-    document.getElementById('export-html-btn')?.addEventListener('click', () =>
-      void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
-    )
     document.getElementById('source-mode-btn')?.addEventListener('click', () => void setSourceMode(!sourceMode))
     document.getElementById('sidebar-outline-btn')?.addEventListener('click', () => toggleSidebar('outline'))
 
