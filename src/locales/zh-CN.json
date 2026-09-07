@@ -61,13 +61,13 @@
     "open": "打开…",
     "openFolder": "打开文件夹…",
     "save": "保存",
-    "saveAs": "另存为…",
+    "saveAs": "另存为",
     "newTab": "新标签页",
     "closeTab": "关闭标签页",
     "autosave": "自动保存到文件",
     "export": "导出",
-    "exportHtml": "导出 HTML…",
-    "exportPdf": "打印 / 导出 PDF…"
+    "exportHtml": "导出 HTML",
+    "exportPdf": "打印 / 导出 PDF"
   },
   "settings": {
     "title": "设置",
