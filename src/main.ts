@@ -702,6 +702,7 @@ async function boot() {
       void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
     )
     document.getElementById('source-mode-btn')?.addEventListener('click', () => void setSourceMode(!sourceMode))
+    document.getElementById('sidebar-outline-btn')?.addEventListener('click', () => toggleSidebar('outline'))
 
     // ⋯ 溢出菜单
     document.getElementById('menu-files-btn')?.addEventListener('click', () => {
