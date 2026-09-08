@@ -8,6 +8,7 @@
     "dev": "vite",
     "dev:electron": "concurrently -k -s first \"vite\" \"wait-on tcp:127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
     "build": "tsc && vite build",
+    "icon": "node scripts/make-icon.mjs",
     "preview": "vite preview",
     "dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "dist:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
@@ -54,10 +55,12 @@
     ],
     "mac": {
       "target": "dmg",
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     }
   }
 }
