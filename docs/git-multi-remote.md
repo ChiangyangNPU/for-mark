@@ -1,13 +1,13 @@
-# for-mark 多远程仓库同步指南
+# tmd 多远程仓库同步指南
 
 ## 1. 概述
 
-for-mark 代码同时托管在 **Gitee** 和 **GitHub** 两个远程仓库，本地 `master` 分支分别推送为两个平台的分支名：
+tmd 代码同时托管在 **Gitee** 和 **GitHub** 两个远程仓库，本地 `master` 分支分别推送为两个平台的分支名：
 
 | 远程名 | 地址 | 协议 | 推送目标分支 |
 |--------|------|------|--------------|
-| `gitee` | `https://gitee.com/chiangyangNPU/for-mark.git` | HTTPS | `master` |
-| `github` | `git@github.com:ChiangyangNPU/for-mark.git` | SSH | `main` |
+| `gitee` | `https://gitee.com/chiangyangNPU/tmd.git` | HTTPS | `master` |
+| `github` | `git@github.com:ChiangyangNPU/tmd.git` | SSH | `main` |
 
 > 本地分支统一为 `master`，不需要改名。推送时通过 refspec 完成映射：
 > Gitee 推 `master`，GitHub 推 `master:main`（本地 `master` → 远程 `main`）。
@@ -31,8 +31,8 @@ git remote rename origin gitee
 # git remote rename origin github
 
 # 3. 添加另一个远程（克隆自 Gitee 时只需这步）
-git remote add github git@github.com:ChiangyangNPU/for-mark.git
-# git remote add gitee  https://gitee.com/chiangyangNPU/for-mark.git   # 克隆自 GitHub 时
+git remote add github git@github.com:ChiangyangNPU/tmd.git
+# git remote add gitee  https://gitee.com/chiangyangNPU/tmd.git   # 克隆自 GitHub 时
 
 # 4. 核对最终结果，应有两行
 git remote -v
@@ -45,8 +45,8 @@ git remote -v
 
 ```bash
 # 添加远程（已配置，仅作参考）
-git remote add gitee  https://gitee.com/chiangyangNPU/for-mark.git
-git remote add github git@github.com:ChiangyangNPU/for-mark.git
+git remote add gitee  https://gitee.com/chiangyangNPU/tmd.git
+git remote add github git@github.com:ChiangyangNPU/tmd.git
 
 # 查看当前配置
 git remote -v
@@ -102,7 +102,7 @@ git pushall
 ```bash
 # 1. 初始提交
 git add -A
-git commit -m "Initial commit: for-mark"
+git commit -m "Initial commit: tmd"
 
 # 2. 推 Gitee（master）
 git push -u gitee master
@@ -123,7 +123,7 @@ git push -u github master:main
 解决：改用 **SSH** 认证（本机 `id_ed25519` 已注册 GitHub）：
 
 ```bash
-git remote set-url github git@github.com:ChiangyangNPU/for-mark.git
+git remote set-url github git@github.com:ChiangyangNPU/tmd.git
 ssh -T git@github.com   # 输出 "Hi ChiangyangNPU!" 即认证成功
 ```
 

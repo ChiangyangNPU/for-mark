@@ -1,4 +1,8 @@
-# for-mark
+简体中文 | [English](./README-EN.md)
+
+# TMD
+
+**Type Markdow, Done.**
 
 跨平台（macOS / Windows）的 Markdown 所见即所得编辑器，交互对标 Typora，核心特性是 Mermaid 图表的实时渲染。
 
