@@ -3,7 +3,7 @@
  *
  * 渲染层与壳层之间的唯一契约：编辑器代码只依赖本接口，
  * 不直接接触任何 Electron API，保证壳层可替换（如未来迁移 Tauri）。
- * 浏览器环境下 window.forMarkAPI 不存在，各功能模块据此降级。
+ * 浏览器环境下 window.tmdAPI 不存在，各功能模块据此降级。
  *
  * @author chiangyang
  */
@@ -36,8 +36,8 @@ export interface NativeFileAPI {
 
 declare global {
   interface Window {
-    forMarkAPI?: NativeFileAPI
+    tmdAPI?: NativeFileAPI
   }
 }
 
-export const native = window.forMarkAPI
+export const native = window.tmdAPI

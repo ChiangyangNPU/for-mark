@@ -1,5 +1,5 @@
 /**
- * Mermaid 实时渲染插件（for-mark 核心特性）
+ * Mermaid 实时渲染插件（TMD 核心特性）
  *
  * 组成：
  * 1. remark 转换：把 markdown 里的 ```mermaid 代码块转成内部 "mermaid" 节点
@@ -171,7 +171,7 @@ class MermaidView implements NodeView {
     this.placeholder.hidden = true
 
     try {
-      const id = `for-mark-mermaid-${seq}-${Math.random().toString(36).slice(2, 8)}`
+      const id = `tmd-mermaid-${seq}-${Math.random().toString(36).slice(2, 8)}`
       const { svg } = await mermaid.render(id, code)
       if (seq !== this.renderSeq) return // 已有更新的渲染请求，丢弃过期结果
       this.renderArea.innerHTML = svg

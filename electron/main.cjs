@@ -1,5 +1,5 @@
 /**
- * for-mark Electron 主进程
+ * TMD Electron 主进程
  *
  * 职责：创建窗口、应用菜单（文件操作/导出快捷键）、通过 IPC 提供文件与目录读写。
  * 渲染层保持纯网页逻辑，所有 Node 能力都经由 preload 暴露的受控 API 访问。
@@ -52,7 +52,7 @@ function sendToRenderer(channel, payload) {
 
 function queueOpenPath(filePath) {
   if (rendererReady && mainWindow) {
-    sendToRenderer('for-mark:open-path', filePath)
+    sendToRenderer('tmd:open-path', filePath)
   } else {
     pendingOpenPaths.push(filePath)
   }
@@ -65,13 +65,13 @@ function buildMenu() {
     {
       label: L('file'),
       submenu: [
-        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open') },
-        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer('for-mark:menu', 'open-folder') },
-        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save') },
-        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer('for-mark:menu', 'save-as') },
+        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer('tmd:menu', 'open') },
+        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer('tmd:menu', 'open-folder') },
+        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer('tmd:menu', 'save') },
+        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer('tmd:menu', 'save-as') },
         { type: 'separator' },
-        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer('for-mark:menu', 'new-tab') },
-        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer('for-mark:menu', 'close-tab') },
+        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer('tmd:menu', 'new-tab') },
+        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer('tmd:menu', 'close-tab') },
         { type: 'separator' },
         {
           id: 'autosave',
@@ -80,7 +80,7 @@ function buildMenu() {
           checked: autosaveEnabled,
           click: (item) => {
             autosaveEnabled = item.checked
-            sendToRenderer('for-mark:autosave', item.checked)
+            sendToRenderer('tmd:autosave', item.checked)
           },
         },
         { type: 'separator' },
@@ -90,8 +90,8 @@ function buildMenu() {
     {
       label: L('export'),
       submenu: [
-        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer('for-mark:menu', 'export-html') },
-        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer('for-mark:menu', 'export-pdf') },
+        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer('tmd:menu', 'export-html') },
+        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer('tmd:menu', 'export-pdf') },
       ],
     },
     { role: 'editMenu' },
@@ -107,7 +107,7 @@ function createWindow() {
     height: 800,
     minWidth: 860,
     minHeight: 560,
-    title: 'for-mark',
+    title: 'TMD',
     backgroundColor: '#ffffff',
     // Mac：隐藏标题栏文字，红绿灯浮在自定义工具栏上（Typora 式沉浸）
     // trafficLightPosition：hiddenInset 的默认垂直位置偏低，按 44px 工具栏手工居中
@@ -131,7 +131,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     if (rendererReady) {
       while (pendingOpenPaths.length) {
-        sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+        sendToRenderer('tmd:open-path', pendingOpenPaths.shift())
       }
     }
   })
@@ -161,10 +161,10 @@ function createWindow() {
           // 否则下次启动会"复活"被放弃的内容（与"放弃修改"语义冲突）
           try {
             await mainWindow?.webContents.executeJavaScript(
-              "localStorage.removeItem('for-mark:doc:v1')",
+              "localStorage.removeItem('tmd:doc:v1')",
             )
           } catch (err) {
-            console.warn('[for-mark] 清除恢复副本失败', err)
+            console.warn('[tmd] 清除恢复副本失败', err)
           }
           mainWindow?.destroy()
         }
@@ -176,7 +176,7 @@ function createWindow() {
 
 const MD_FILTERS = [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
 
-ipcMain.handle('for-mark:open-file', async () => {
+ipcMain.handle('tmd:open-file', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     filters: MD_FILTERS,
     properties: ['openFile'],
@@ -187,13 +187,13 @@ ipcMain.handle('for-mark:open-file', async () => {
   return { path: filePath, name: path.basename(filePath), content }
 })
 
-ipcMain.handle('for-mark:read-file', async (_event, filePath) => {
+ipcMain.handle('tmd:read-file', async (_event, filePath) => {
   const content = await fs.readFile(filePath, 'utf-8')
   return { path: filePath, name: path.basename(filePath), content }
 })
 
 // 列出文件夹内的 Markdown 文件与子文件夹（两层），用于文件树侧边栏
-ipcMain.handle('for-mark:read-dir', async (_event, dirPath) => {
+ipcMain.handle('tmd:read-dir', async (_event, dirPath) => {
   async function walk(dir, depth) {
     const entries = await fs.readdir(dir, { withFileTypes: true })
     const folders = []
@@ -216,12 +216,12 @@ ipcMain.handle('for-mark:read-dir', async (_event, dirPath) => {
   }
 })
 
-ipcMain.handle('for-mark:save-file', async (_event, filePath, content) => {
+ipcMain.handle('tmd:save-file', async (_event, filePath, content) => {
   await fs.writeFile(filePath, content, 'utf-8')
   return true
 })
 
-ipcMain.handle('for-mark:save-file-as', async (_event, content) => {
+ipcMain.handle('tmd:save-file-as', async (_event, content) => {
   const result = await dialog.showSaveDialog(mainWindow, {
     defaultPath: '未命名.md',
     filters: MD_FILTERS,
@@ -232,7 +232,7 @@ ipcMain.handle('for-mark:save-file-as', async (_event, content) => {
 })
 
 // 通用导出（HTML 等）：弹出另存为对话框并写入
-ipcMain.handle('for-mark:export-as', async (_event, { content, defaultName, filters }) => {
+ipcMain.handle('tmd:export-as', async (_event, { content, defaultName, filters }) => {
   const result = await dialog.showSaveDialog(mainWindow, { defaultPath: defaultName, filters })
   if (result.canceled || !result.filePath) return null
   await fs.writeFile(result.filePath, content, 'utf-8')
@@ -240,31 +240,31 @@ ipcMain.handle('for-mark:export-as', async (_event, { content, defaultName, filt
 })
 
 // 打印 / 导出 PDF（走系统打印对话框）
-ipcMain.handle('for-mark:print', async () => {
+ipcMain.handle('tmd:print', async () => {
   mainWindow?.webContents.print({ printBackground: true })
   return true
 })
 
 // 选择文件夹（文件树）
-ipcMain.handle('for-mark:open-folder', async () => {
+ipcMain.handle('tmd:open-folder', async () => {
   const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] })
   if (result.canceled || !result.filePaths[0]) return null
   return result.filePaths[0]
 })
 
 // 渲染层同步未保存状态
-ipcMain.on('for-mark:set-dirty', (_event, dirty) => {
+ipcMain.on('tmd:set-dirty', (_event, dirty) => {
   rendererDirty = !!dirty
 })
 
 // 设置面板同步自动保存开关（保持菜单勾选状态一致）
-ipcMain.on('for-mark:set-autosave-enabled', (_event, enabled) => {
+ipcMain.on('tmd:set-autosave-enabled', (_event, enabled) => {
   autosaveEnabled = !!enabled
   if (autosaveMenuItem) autosaveMenuItem.checked = autosaveEnabled
 })
 
 // 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）
-ipcMain.handle('for-mark:save-image', async (_event, { dir, name, base64 }) => {
+ipcMain.handle('tmd:save-image', async (_event, { dir, name, base64 }) => {
   const assetsDir = path.join(dir, 'assets')
   await fs.mkdir(assetsDir, { recursive: true })
   const filePath = path.join(assetsDir, name)
@@ -273,15 +273,15 @@ ipcMain.handle('for-mark:save-image', async (_event, { dir, name, base64 }) => {
 })
 
 // 渲染层就绪：补发排队中的待打开文件
-ipcMain.on('for-mark:ready', () => {
+ipcMain.on('tmd:ready', () => {
   rendererReady = true
   while (pendingOpenPaths.length) {
-    sendToRenderer('for-mark:open-path', pendingOpenPaths.shift())
+    sendToRenderer('tmd:open-path', pendingOpenPaths.shift())
   }
 })
 
 // 渲染层把当前语言的菜单文案发来，重建菜单
-ipcMain.on('for-mark:set-locale-info', (_event, labels) => {
+ipcMain.on('tmd:set-locale-info', (_event, labels) => {
   if (labels && typeof labels === 'object') {
     menuLabels = { ...DEFAULT_MENU_LABELS, ...labels }
     buildMenu()

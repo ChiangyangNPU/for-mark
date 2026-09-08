@@ -1,5 +1,5 @@
 {
-  "name": "for-mark",
+  "name": "tmd",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -9,10 +9,11 @@
     "dev:electron": "concurrently -k -s first \"vite\" \"wait-on tcp:127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://localhost:5173 electron .\"",
     "build": "tsc && vite build",
     "icon": "node scripts/make-icon.mjs",
+    "cleanup": "bash scripts/cleanup-old-app.sh",
     "preview": "vite preview",
     "dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
     "dist:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
-    "dist:install": "npm run dist:dir && rm -rf /Applications/for-mark.app && cp -R release/mac-arm64/for-mark.app /Applications/"
+    "dist:install": "npm run dist:dir && rm -rf /Applications/TMD.app && cp -R release/mac-arm64/TMD.app /Applications/"
   },
   "devDependencies": {
     "@codemirror/lang-markdown": "^6.5.2",
@@ -34,8 +35,8 @@
   },
   "dependencies": {},
   "build": {
-    "appId": "com.chiangyang.for-mark",
-    "productName": "for-mark",
+    "appId": "com.chiangyang.tmd",
+    "productName": "TMD",
     "directories": {
       "output": "release"
     },

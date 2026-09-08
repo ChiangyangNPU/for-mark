@@ -57,7 +57,7 @@ export const pasteImage = $prose(
 
           for (const file of files) {
             if (file.size > MAX_IMAGE_BYTES) {
-              console.warn(`[for-mark] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`)
+              console.warn(`[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`)
               continue
             }
             void insertImage(view, file)
@@ -95,7 +95,7 @@ async function saveToAssets(baseDir: string, file: File, dataUrl: string): Promi
     const result = await native?.saveImage({ dir: baseDir, name, base64 })
     return result?.name ?? name
   } catch (err) {
-    console.warn('[for-mark] 图片落盘失败，降级为内联模式', err)
+    console.warn('[tmd] 图片落盘失败，降级为内联模式', err)
     return null
   }
 }

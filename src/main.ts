@@ -1,5 +1,5 @@
 /**
- * for-mark - 轻量跨平台 Markdown 所见即所得编辑器
+ * TMD - 轻量跨平台 Markdown 所见即所得编辑器
  *
  * 应用启动入口：负责整体状态编排（标签页 / 脏标记 / 主题 / 语言），
  * 以及各功能模块（编辑器、文件、查找、大纲、源码模式、导出）的装配与联动。
@@ -40,15 +40,15 @@ import { setImageBaseDir, imageSrcResolver } from './image-resolver'
 // ---------------------------------------------------------------------------
 
 /** localStorage：自动保存的文档内容 */
-const DOC_KEY = 'for-mark:doc:v1'
+const DOC_KEY = 'tmd:doc:v1'
 /** localStorage：主题偏好（dark / light） */
-const THEME_KEY = 'for-mark:theme'
+const THEME_KEY = 'tmd:theme'
 /** localStorage：最近打开文件列表 */
-const RECENT_KEY = 'for-mark:recent'
+const RECENT_KEY = 'tmd:recent'
 /** localStorage：粘贴图片存储策略（inline / assets） */
-const IMAGE_STRATEGY_KEY = 'for-mark:img'
+const IMAGE_STRATEGY_KEY = 'tmd:img'
 /** localStorage：自动保存开关（桌面版主进程菜单勾选的镜像） */
-const AUTOSAVE_KEY = 'for-mark:autosave'
+const AUTOSAVE_KEY = 'tmd:autosave'
 
 /** 首次启动（无本地文档）时展示的初始内容（空文档，由用户自行输入） */
 const DEMO_DOC = ''
@@ -611,7 +611,7 @@ function applyTheme(isDark: boolean): Promise<void> {
   // 串行化：快速连续切换时避免异步重建互相踩踏（产生多个编辑器实例）
   themeApplying = themeApplying
     .then(() => doApplyTheme(isDark))
-    .catch((err) => console.error('[for-mark] 主题切换失败', err))
+    .catch((err) => console.error('[tmd] 主题切换失败', err))
   return themeApplying
 }
 
