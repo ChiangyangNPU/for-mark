@@ -52,24 +52,6 @@ const IMAGE_STRATEGY_KEY = 'tmd:img'
 /** localStorage：自动保存开关（桌面版主进程菜单勾选的镜像） */
 const AUTOSAVE_KEY = 'tmd:autosave'
 
-/** 品牌更名（for-mark → TMD）后的旧键迁移：新键不存在时把旧值搬过来，避免老数据静默丢失 */
-function migrateLegacyKeys() {
-  const legacy: [string, string][] = [
-    ['for-mark:doc:v1', DOC_KEY],
-    ['for-mark:theme', THEME_KEY],
-    ['for-mark:recent', RECENT_KEY],
-    ['for-mark:img', IMAGE_STRATEGY_KEY],
-    ['for-mark:autosave', AUTOSAVE_KEY],
-  ]
-  for (const [oldKey, newKey] of legacy) {
-    const value = localStorage.getItem(oldKey)
-    if (value !== null && localStorage.getItem(newKey) === null) {
-      localStorage.setItem(newKey, value)
-    }
-  }
-}
-migrateLegacyKeys()
-
 /** 首次启动（无本地文档）时展示的初始内容（空文档，由用户自行输入） */
 const DEMO_DOC = ''
 
