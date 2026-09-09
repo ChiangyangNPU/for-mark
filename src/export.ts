@@ -32,6 +32,15 @@ const EXPORT_CSS = `
  * - TOC 注释标记行删除（保留中间真实链接列表，正常渲染为可点目录）
  * - 标题加 GitHub 风格 id 锚点（与编辑器内 TOC 链接的 slug 规则一致）
  */
+
+/** inline token 的渲染纯文本（image 的 alt 不计入，与 ProseMirror textContent 对齐） */
+type InlineToken = { type: string; content?: string; children?: InlineToken[] }
+function inlineText(token: InlineToken): string {
+  if (token.type === 'text' || token.type === 'code_inline') return token.content ?? ''
+  if (token.type === 'image') return ''
+  return (token.children ?? []).map(inlineText).join('')
+}
+
 function renderMarkdown(markdown: string): string {
   const fence = mdIt.renderer.rules.fence ?? ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
   mdIt.renderer.rules.fence = (tokens, idx, options, env, self) => {
@@ -46,8 +55,8 @@ function renderMarkdown(markdown: string): string {
   const slugCount = new Map<string, number>()
   mdIt.renderer.rules.heading_open = (tokens, idx) => {
     const token = tokens[idx]
-    const inline = tokens[idx + 1]
-    const text = inline && inline.type === 'inline' ? inline.content : ''
+    const inline = tokens[idx + 1] as InlineToken | undefined
+    const text = inline && inline.type === 'inline' ? inlineText(inline) : ''
     let slug = slugify(text)
     const seen = slugCount.get(slug) ?? 0
     slugCount.set(slug, seen + 1)

@@ -61,26 +61,34 @@ function convertTocBlocks(node: MdNode): void {
     const text = nodeText(child).trim()
     const openMatch = text.match(TOC_OPEN_RE)
     if (!openMatch) continue
-    // 开始标记前若有其他非空白内容（与正文混在同一段落），保守起见不处理
-    if (text.slice(0, openMatch.index).trim() !== '') continue
+    const openIndex = openMatch.index ?? 0
+    // 开标记所在段落必须是纯标记（前后无其他内容），混有正文则不识别
+    if (text.slice(0, openIndex).trim() !== '') continue
 
-    // 结束标记在同一节点内（相邻注释被合并为一个 html 节点的情况）
+    // 结束标记在同一节点内（相邻注释被合并为一个 html 节点的情况）：
+    // 整段只允许开闭标记与空白，夹带其他文字不识别
     if (TOC_CLOSE_RE.test(text)) {
+      if (text.replace(TOC_OPEN_RE, '').replace(TOC_CLOSE_RE, '').trim() !== '') continue
       children.splice(i, 1, { type: 'toc' })
       continue
     }
-    // 向后找含结束标记的节点（中间可能夹着 list 等目录链接内容）；
-    // 找不到则吞到容器末尾（容错，区间不闭合）
+    // 开标记后同段也不允许有正文（如 "<!-- TOC --> 说明"）
+    if (text.slice(openIndex + openMatch[0].length).trim() !== '') continue
+
+    // 向后找闭合标记（中间夹着 list 等目录链接内容）；闭标记段落同样须为纯标记
     let end = -1
     for (let j = i + 1; j < children.length; j++) {
       const sib = children[j]
-      if ((sib.type === 'html' || sib.type === 'paragraph') && TOC_CLOSE_RE.test(nodeText(sib))) {
+      if (sib.type !== 'html' && sib.type !== 'paragraph') continue
+      const sibText = nodeText(sib).trim()
+      if (TOC_CLOSE_RE.test(sibText) && sibText.replace(TOC_CLOSE_RE, '').trim() === '') {
         end = j
         break
       }
     }
-    const count = (end === -1 ? children.length : end + 1) - i
-    children.splice(i, count, { type: 'toc' })
+    // 无闭合标记：不识别、保留原文，否则会把后续正文吞进原子节点造成内容丢失
+    if (end === -1) continue
+    children.splice(i, end + 1 - i, { type: 'toc' })
   }
 }
 
@@ -194,12 +202,12 @@ class TocView implements NodeView {
     this.dom.className = 'toc-block'
     this.dom.setAttribute('data-type', 'toc')
     tocViews.add(this)
-    this.refresh(view.state.doc)
+    this.refresh()
   }
 
-  /** 按当前文档标题重建目录（由 prose 插件在 docChanged 时调用） */
-  refresh(doc: ProseNode) {
-    const items = collectHeadings(doc).filter((h) => h.level <= 3)
+  /** 按当前文档标题重建目录（由 prose 插件在 docChanged 时防抖调用） */
+  refresh() {
+    const items = collectHeadings(this.view.state.doc).filter((h) => h.level <= 3)
     this.dom.textContent = ''
 
     if (!items.length) {
@@ -244,9 +252,9 @@ class TocView implements NodeView {
     return true
   }
 
-  // 块内事件自行处理（点击跳转），阻止 ProseMirror 把原子块选为 NodeSelection
-  stopEvent(): boolean {
-    return true
+  // 目录行点击自行处理（跳转）；块内空白处放行，允许点选节点后删除
+  stopEvent(event: Event): boolean {
+    return event.target instanceof HTMLElement && event.target.closest('.toc-item') !== null
   }
 
   destroy() {
@@ -257,17 +265,26 @@ class TocView implements NodeView {
 const tocView = $view(tocSchema.node, () => (node, view, getPos) => new TocView(node, view, getPos))
 
 // ---------------------------------------------------------------------------
-// 5. prose 插件：文档变化时刷新所有 toc 视图
+// 5. prose 插件：文档变化时防抖刷新所有 toc 视图
 // ---------------------------------------------------------------------------
+
+/** 目录刷新防抖时长：合并连续输入，避免每次按键全量重建目录 DOM */
+const TOC_REFRESH_DELAY_MS = 300
+let refreshTimer: number | undefined
+
+function scheduleTocRefresh() {
+  window.clearTimeout(refreshTimer)
+  refreshTimer = window.setTimeout(() => {
+    for (const v of tocViews) v.refresh()
+  }, TOC_REFRESH_DELAY_MS)
+}
 
 const tocRefresh = $prose(
   () =>
     new Plugin({
       view: () => ({
         update(view: EditorView, prevState) {
-          if (view.state.doc !== prevState.doc) {
-            for (const v of tocViews) v.refresh(view.state.doc)
-          }
+          if (view.state.doc !== prevState.doc) scheduleTocRefresh()
         },
       }),
     }),
