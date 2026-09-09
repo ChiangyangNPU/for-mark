@@ -1,0 +1,217 @@
+/**
+ * 编辑器枢纽：Milkdown 编辑器实例的创建/销毁/重建、源码模式切换、内容取回。
+ *
+ * 应用状态（标签页、保存、大纲）不直接耦合在这里——通过 setEditorHooks 注入：
+ * 文档变更时回调 onMarkdownChange（保存恢复副本/字数/脏标记）与
+ * onDocUpdate（大纲刷新），由 main.ts 装配，避免与 tabs 等模块循环依赖。
+ */
+import { Editor, defaultValueCtx, editorViewCtx, rootCtx } from '@milkdown/kit/core'
+import { commonmark } from '@milkdown/kit/preset/commonmark'
+import { gfm } from '@milkdown/kit/preset/gfm'
+import { history } from '@milkdown/kit/plugin/history'
+import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
+import { getMarkdown } from '@milkdown/kit/utils'
+import { prism } from '@milkdown/plugin-prism'
+import { math } from '@milkdown/plugin-math'
+import type { EditorView } from '@milkdown/kit/prose/view'
+import type { Node as ProseNode } from '@milkdown/kit/prose/model'
+import { mermaidPlugins } from './mermaid'
+import { pasteImage } from './paste-image'
+import { findPlugin, findClear } from './find'
+import { taskListClick } from './task-list'
+import { tocPlugins, fillTocBlocks } from './toc'
+import { imageSrcResolver } from './image-resolver'
+import { collectOutline, renderOutline } from './outline'
+import { createSourceEditor } from './sourcemode'
+import { t } from './i18n'
+
+/** 当前编辑器实例 */
+let editor: Editor | null = null
+/** 当前 ProseMirror 视图（供大纲/查找等模块直接操作文档） */
+let pmView: EditorView | null = null
+/** 是否处于源码模式（CodeMirror 整篇编辑） */
+let sourceMode = false
+/** 源码模式下的 CodeMirror 实例（仅源码模式期间存在） */
+let cmView: { destroy(): void; state: { doc: { toString(): string } } } | null = null
+
+/** 文档变更钩子（main.ts 装配） */
+interface EditorHooks {
+  onMarkdownChange: (markdown: string) => void
+  onDocUpdate: (doc: ProseNode) => void
+}
+
+let hooks: EditorHooks = { onMarkdownChange: () => {}, onDocUpdate: () => {} }
+
+export function setEditorHooks(next: EditorHooks) {
+  hooks = next
+}
+
+export function getPmView(): EditorView | null {
+  return pmView
+}
+
+export function isSourceMode(): boolean {
+  return sourceMode
+}
+
+export function getEditor(): Editor | null {
+  return editor
+}
+
+/** 刷新工具栏字数统计（去空白字符后的长度） */
+export function updateWordCount(markdown: string) {
+  const el = document.getElementById('word-count')
+  if (el) el.textContent = t('editor.wordCount', { count: markdown.replace(/\s/g, '').length })
+}
+
+/**
+ * 创建 Milkdown 编辑器实例并挂载到 #editor。
+ *
+ * 插件清单：commonmark（基础语法）、gfm（表格/任务列表）、history（撤销重做）、
+ * listener（内容监听）、mermaid（自研图表插件）、prism（代码高亮）、
+ * math（KaTeX 公式）、pasteImage（粘贴图片）、findPlugin（查找高亮）、
+ * taskListClick（任务复选框）、toc（目录块）、imageSrcResolver（相对路径图片）。
+ */
+async function createEditor(markdown: string): Promise<Editor> {
+  return Editor.make()
+    .config((ctx) => {
+      ctx.set(rootCtx, document.getElementById('editor'))
+      ctx.set(defaultValueCtx, markdown)
+      ctx.get(listenerCtx).markdownUpdated((_ctx, md, _prev) => {
+        hooks.onMarkdownChange(md)
+      })
+      ctx.get(listenerCtx).updated((_ctx, doc) => {
+        hooks.onDocUpdate(doc)
+      })
+    })
+    .use(commonmark)
+    .use(gfm)
+    .use(history)
+    .use(listener)
+    .use(mermaidPlugins)
+    .use(prism)
+    .use(math)
+    .use(pasteImage)
+    .use(findPlugin)
+    .use(taskListClick)
+    .use(tocPlugins)
+    .use(imageSrcResolver)
+    .create()
+}
+
+/** 创建编辑器并挂载（启动时用） */
+export async function mountEditor(markdown: string): Promise<void> {
+  editor = await createEditor(markdown)
+  editor.action((ctx) => {
+    pmView = ctx.get(editorViewCtx)
+  })
+}
+
+/** 销毁当前编辑器（关闭最后一个标签时用） */
+export async function destroyEditor() {
+  await editor?.destroy()
+  editor = null
+  pmView = null
+}
+
+export interface ReplaceOptions {
+  /** 重建前后内容相同（退出源码模式）时保持滚动位置：锁定 #editor 高度防塌陷 */
+  preserveScroll?: boolean
+  /** 目标滚动位置（切换标签恢复用）；异步内容增高导致位置被钳回时延迟校正一次 */
+  scrollTop?: number
+}
+
+/**
+ * 销毁当前编辑器并用新文档重建（打开文件 / 切换标签 / 退出源码模式共用）。
+ * preserveScroll：重建期间锁定 #editor 高度，防止内容塌陷导致滚动条闪烁、
+ * scrollTop 被归零。新编辑器刚挂载时图片未解码、mermaid 未渲染，内容高度会
+ * 先矮后高，所以锁定要持续到内容高度补回原值为止。
+ */
+export async function replaceEditor(markdown: string, options: ReplaceOptions = {}) {
+  const { preserveScroll = false, scrollTop } = options
+  const scrollEl = document.querySelector('.page-scroll') as HTMLElement | null
+  const editorEl = document.getElementById('editor')
+  const prevTop = scrollTop ?? scrollEl?.scrollTop ?? 0
+  const prevHeight = editorEl?.offsetHeight ?? 0
+
+  if (preserveScroll && editorEl && prevHeight > 0) {
+    editorEl.style.minHeight = `${prevHeight}px`
+  }
+
+  findClear(pmView)
+  await editor?.destroy()
+  editor = await createEditor(markdown)
+  editor.action((ctx) => {
+    pmView = ctx.get(editorViewCtx)
+  })
+  updateWordCount(markdown)
+  const list = document.getElementById('outline-list')
+  if (list && pmView) renderOutline(list, collectOutline(pmView.state.doc), pmView)
+  setSourceMode(false, false)
+
+  if (preserveScroll && editorEl) {
+    const inner = editorEl.firstElementChild as HTMLElement | null
+    const deadline = performance.now() + 1500
+    const unlock = () => {
+      const caughtUp = inner ? inner.offsetHeight >= prevHeight - 1 : true
+      if (!caughtUp && performance.now() < deadline) {
+        requestAnimationFrame(unlock)
+        return
+      }
+      editorEl.style.minHeight = ''
+      if (scrollEl) scrollEl.scrollTop = prevTop
+    }
+    requestAnimationFrame(unlock)
+  } else if (scrollTop != null && scrollEl) {
+    // 目标滚动位置：立即恢复；若异步内容（图片解码/mermaid 渲染）尚未增高，
+    // scrollTop 会被钳到更小值，500ms 后校正一次。用户主动滚动（滚轮/拖拽/
+    // 键盘）即放弃校正，避免与用户操作打架
+    scrollEl.scrollTop = prevTop
+    let cancelled = false
+    const cancel = () => {
+      cancelled = true
+      for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.removeEventListener(type, cancel)
+    }
+    for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.addEventListener(type, cancel, { passive: true })
+    window.setTimeout(() => {
+      for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.removeEventListener(type, cancel)
+      if (!cancelled && scrollEl.scrollTop < prevTop) scrollEl.scrollTop = prevTop
+    }, 500)
+  }
+}
+
+/** 取当前编辑器内容的 markdown 文本（源码模式下取 CodeMirror 内容） */
+export function currentMarkdown(): string {
+  if (sourceMode && cmView) return cmView.state.doc.toString()
+  const markdown = editor?.action(getMarkdown()) ?? ''
+  // toc 节点序列化为空注释占位，此处按当前文档标题填充为真实链接列表
+  return pmView ? fillTocBlocks(markdown, pmView.state.doc) : markdown
+}
+
+/**
+ * 切换 所见即所得 / 源码 模式。
+ * 进入时把 markdown 全文交给 CodeMirror；退出时取回全文重建编辑器。
+ */
+export async function setSourceMode(on: boolean, syncContent = true) {
+  const pmEl = document.getElementById('editor')
+  const srcEl = document.getElementById('src-editor')
+  const btn = document.getElementById('source-mode-btn')
+  if (!pmEl || !srcEl) return
+
+  if (on) {
+    const markdown = currentMarkdown()
+    cmView?.destroy()
+    srcEl.textContent = ''
+    cmView = createSourceEditor(srcEl, markdown)
+  } else if (sourceMode && cmView) {
+    const markdown = cmView.state.doc.toString()
+    cmView.destroy()
+    cmView = null
+    if (syncContent) await replaceEditor(markdown, { preserveScroll: true })
+  }
+
+  sourceMode = on
+  pmEl.hidden = on
+  srcEl.hidden = !on
+  if (btn) btn.textContent = on ? t('toolbar.sourceModeOn') : t('toolbar.sourceMode')
+}

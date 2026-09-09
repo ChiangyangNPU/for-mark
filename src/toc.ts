@@ -48,8 +48,9 @@ function nodeText(node: MdNode): string {
  * Milkdown 的 remark-parse 关闭了原始 HTML（allowDangerousHtml: false，安全默认），
  * `<!-- TOC -->` 在 mdast 中是"内容为注释文本的段落"而非 html 节点；
  * 外部渲染器（GitHub 等）则按 HTML 注释解析。这里按节点文本识别，两种情况都兼容。
+ * 导出供单元测试覆盖（未闭合标记不吞内容等数据安全边界）。
  */
-function convertTocBlocks(node: MdNode): void {
+export function convertTocBlocks(node: MdNode): void {
   if (!node.children) return
   const children = node.children
   for (let i = 0; i < children.length; i++) {

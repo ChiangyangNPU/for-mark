@@ -12,6 +12,7 @@
  */
 import { $prose } from '@milkdown/kit/utils'
 import { Plugin } from '@milkdown/kit/prose/state'
+import type { Selection } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { native } from './native'
 
@@ -55,12 +56,15 @@ export const pasteImage = $prose(
           if (!files.length) return false
           event.preventDefault()
 
+          // 异步插入期间用户可能继续输入，捕获 paste 时刻的选区，
+          // 避免图片落到完成时的选区位置（竞态错位）
+          const selection = view.state.selection
           for (const file of files) {
             if (file.size > MAX_IMAGE_BYTES) {
               console.warn(`[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`)
               continue
             }
-            void insertImage(view, file)
+            void insertImage(view, file, selection)
           }
           return true
         },
@@ -69,7 +73,7 @@ export const pasteImage = $prose(
 )
 
 /** 读取图片并按当前策略插入：assets 落盘失败时自动降级为内联 */
-async function insertImage(view: EditorView, file: File) {
+async function insertImage(view: EditorView, file: File, selection: Selection) {
   const dataUrl = await readAsDataURL(file)
 
   let src = dataUrl
@@ -83,7 +87,7 @@ async function insertImage(view: EditorView, file: File) {
   const nodeType = view.state.schema.nodes.image
   if (!nodeType) return
   const node = nodeType.create({ src, alt: file.name })
-  view.dispatch(view.state.tr.replaceSelectionWith(node))
+  view.dispatch(view.state.tr.setSelection(selection).replaceSelectionWith(node))
 }
 
 /** 写入文档同目录 assets/ 文件夹，返回实际文件名；失败返回 null（降级内联） */

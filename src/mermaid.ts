@@ -89,6 +89,14 @@ const mermaidSchema = $nodeSchema('mermaid', () => ({
 
 const RENDER_DEBOUNCE_MS = 400
 
+/** 全部存活的 mermaid 视图，主题切换时统一原地重渲（不重建编辑器） */
+const mermaidViews = new Set<MermaidView>()
+
+/** 主题切换后重渲所有已渲染的图表（SVG 内嵌旧主题配色，必须重画） */
+export function reThemeMermaid() {
+  for (const v of mermaidViews) v.reTheme()
+}
+
 class MermaidView implements NodeView {
   dom: HTMLDivElement
   contentDOM: HTMLElement
@@ -133,8 +141,14 @@ class MermaidView implements NodeView {
     this.dom.append(this.renderArea, this.errorTip, this.placeholder, this.srcWrapper)
 
     this.renderArea.addEventListener('click', () => this.enterEdit())
+    mermaidViews.add(this)
     this.syncEditing(node)
     this.scheduleRender(node.textContent)
+  }
+
+  /** 主题切换：用当前源码重画 SVG（绕过防抖；renderSeq 守卫丢弃过期结果） */
+  reTheme() {
+    if (this.lastCode != null) void this.renderNow(this.lastCode)
   }
 
   /** 光标位于本块的内容范围内即视为编辑态（显示源码、隐藏图表） */
@@ -213,6 +227,7 @@ class MermaidView implements NodeView {
 
   destroy() {
     window.clearTimeout(this.timer)
+    mermaidViews.delete(this)
   }
 }
 
