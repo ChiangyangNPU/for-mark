@@ -12,11 +12,17 @@ export interface NativeFileAPI {
   isNative: true
   openFile(): Promise<{ path: string; name: string; content: string } | null>
   readFile(filePath: string): Promise<{ path: string; name: string; content: string }>
-  readDir(dirPath: string): Promise<{ path: string; name: string; children: import('./filetree').FileEntry[] } | null>
+  readDir(
+    dirPath: string,
+  ): Promise<{ path: string; name: string; children: import('./filetree').FileEntry[] } | null>
   openFolder(): Promise<string | null>
   saveFile(filePath: string, content: string): Promise<boolean>
   saveFileAs(content: string): Promise<{ path: string; name: string } | null>
-  exportAs(options: { content: string; defaultName: string; filters: { name: string; extensions: string[] }[] }): Promise<{ path: string; name: string } | null>
+  exportAs(options: {
+    content: string
+    defaultName: string
+    filters: { name: string; extensions: string[] }[]
+  }): Promise<{ path: string; name: string } | null>
   print(): Promise<boolean>
   /** 向主进程同步未保存状态（用于关闭确认） */
   setDirty(dirty: boolean): void
@@ -31,7 +37,11 @@ export interface NativeFileAPI {
   /** 设置面板同步自动保存开关（保持与菜单勾选一致） */
   setAutosaveEnabled(enabled: boolean): void
   /** 粘贴图片落盘：写入 dir/assets/name，返回实际文件名 */
-  saveImage(options: { dir: string; name: string; base64: string }): Promise<{ name: string } | null>
+  saveImage(options: {
+    dir: string
+    name: string
+    base64: string
+  }): Promise<{ name: string } | null>
 }
 
 declare global {

@@ -110,7 +110,9 @@ describe('convertTocBlocks', () => {
 
 describe('fillTocBlocks', () => {
   const makeDoc = (levels: number[], texts: string[]) => {
-    const children = levels.map((lv, i) => schema.node('heading', { level: lv }, schema.text(texts[i])))
+    const children = levels.map((lv, i) =>
+      schema.node('heading', { level: lv }, schema.text(texts[i])),
+    )
     return schema.node('doc', null, children)
   }
 
@@ -123,7 +125,9 @@ describe('fillTocBlocks', () => {
 
   it('无标题时列表为空', () => {
     const doc = schema.node('doc', null, schema.node('paragraph', null, schema.text('x')))
-    expect(fillTocBlocks('<!-- TOC -->\n\n<!-- /TOC -->', doc)).toBe('<!-- TOC -->\n\n\n\n<!-- /TOC -->')
+    expect(fillTocBlocks('<!-- TOC -->\n\n<!-- /TOC -->', doc)).toBe(
+      '<!-- TOC -->\n\n\n\n<!-- /TOC -->',
+    )
   })
 
   it('兼容 remark-stringify 的行首反斜杠转义', () => {

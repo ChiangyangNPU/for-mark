@@ -37,11 +37,7 @@ export function renderOutline(container: HTMLElement, items: OutlineItem[], view
     row.textContent = item.text || '（无标题文本）'
     row.addEventListener('click', () => {
       const $pos = view.state.doc.resolve(item.pos + 1)
-      view.dispatch(
-        view.state.tr
-          .setSelection(TextSelection.near($pos, 1))
-          .scrollIntoView(),
-      )
+      view.dispatch(view.state.tr.setSelection(TextSelection.near($pos, 1)).scrollIntoView())
       view.focus()
     })
     container.appendChild(row)

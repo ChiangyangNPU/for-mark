@@ -1,7 +1,14 @@
 /**
  * 查找栏：DOM 装配与交互（仅所见即所得模式；源码模式用 CodeMirror 自带搜索）
  */
-import { findSetQuery, findStep, findReplaceCurrent, findReplaceAll, findClear, findState } from './find'
+import {
+  findSetQuery,
+  findStep,
+  findReplaceCurrent,
+  findReplaceAll,
+  findClear,
+  findState,
+} from './find'
 import { getPmView, isSourceMode } from './editor-core'
 
 /** 打开查找栏（源码模式下不打开，留给 CodeMirror 搜索） */

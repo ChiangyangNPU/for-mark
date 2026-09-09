@@ -236,9 +236,7 @@ class TocView implements NodeView {
   private jumpTo(pos: number) {
     const $pos = this.view.state.doc.resolve(pos + 1)
     this.view.dispatch(
-      this.view.state.tr
-        .setSelection(TextSelection.near($pos, 1))
-        .scrollIntoView(),
+      this.view.state.tr.setSelection(TextSelection.near($pos, 1)).scrollIntoView(),
     )
     this.view.focus()
   }

@@ -42,7 +42,9 @@ function inlineText(token: InlineToken): string {
 }
 
 function renderMarkdown(markdown: string): string {
-  const fence = mdIt.renderer.rules.fence ?? ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
+  const fence =
+    mdIt.renderer.rules.fence ??
+    ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
   mdIt.renderer.rules.fence = (tokens, idx, options, env, self) => {
     const token = tokens[idx]
     if (token.info.trim() === 'mermaid') {

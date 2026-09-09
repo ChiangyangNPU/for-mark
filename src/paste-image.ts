@@ -61,7 +61,9 @@ export const pasteImage = $prose(
           const selection = view.state.selection
           for (const file of files) {
             if (file.size > MAX_IMAGE_BYTES) {
-              console.warn(`[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`)
+              console.warn(
+                `[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`,
+              )
               continue
             }
             void insertImage(view, file, selection)

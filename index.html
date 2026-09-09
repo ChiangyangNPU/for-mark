@@ -9,19 +9,53 @@
     <header class="toolbar">
       <span id="win-title" class="win-title"></span>
       <span id="word-count" class="word-count">0 字</span>
-      <button id="sidebar-outline-btn" class="tool-btn" data-i18n="toolbar.outline" data-i18n-title="toolbar.outlineTitle">大纲</button>
-      <button id="source-mode-btn" class="tool-btn" data-i18n="toolbar.sourceMode" data-i18n-title="toolbar.sourceModeTitle">源码</button>
-      <button id="import-btn" class="tool-btn" data-i18n="toolbar.open" data-i18n-title="toolbar.openTitle">打开</button>
-      <button id="export-btn" class="tool-btn" data-i18n="toolbar.save" data-i18n-title="toolbar.saveTitle">保存</button>
+      <button
+        id="sidebar-outline-btn"
+        class="tool-btn"
+        data-i18n="toolbar.outline"
+        data-i18n-title="toolbar.outlineTitle"
+      >
+        大纲
+      </button>
+      <button
+        id="source-mode-btn"
+        class="tool-btn"
+        data-i18n="toolbar.sourceMode"
+        data-i18n-title="toolbar.sourceModeTitle"
+      >
+        源码
+      </button>
+      <button
+        id="import-btn"
+        class="tool-btn"
+        data-i18n="toolbar.open"
+        data-i18n-title="toolbar.openTitle"
+      >
+        打开
+      </button>
+      <button
+        id="export-btn"
+        class="tool-btn"
+        data-i18n="toolbar.save"
+        data-i18n-title="toolbar.saveTitle"
+      >
+        保存
+      </button>
       <button id="more-btn" class="tool-btn" data-i18n-title="toolbar.more">⋯</button>
-      <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">🌙</button>
+      <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">
+        🌙
+      </button>
     </header>
 
     <div id="more-menu" class="more-menu" hidden>
       <button id="menu-files-btn" class="menu-item" data-i18n="toolbar.files">文件</button>
       <button id="menu-find-btn" class="menu-item" data-i18n="toolbar.find">查找</button>
-      <button id="menu-export-html-btn" class="menu-item" data-i18n="menu.exportHtml">导出 HTML</button>
-      <button id="menu-insert-toc-btn" class="menu-item" data-i18n="menu.insertToc">插入目录</button>
+      <button id="menu-export-html-btn" class="menu-item" data-i18n="menu.exportHtml">
+        导出 HTML
+      </button>
+      <button id="menu-insert-toc-btn" class="menu-item" data-i18n="menu.insertToc">
+        插入目录
+      </button>
       <div class="menu-sep"></div>
       <button id="menu-settings-btn" class="menu-item" data-i18n="toolbar.settings">设置</button>
     </div>
@@ -30,20 +64,36 @@
       <div class="settings-modal">
         <div class="settings-header">
           <span class="settings-title" data-i18n="settings.title">设置</span>
-          <button id="settings-close" class="theme-toggle" data-i18n-title="settings.close">✕</button>
+          <button id="settings-close" class="theme-toggle" data-i18n-title="settings.close">
+            ✕
+          </button>
         </div>
 
         <div class="settings-section">
           <div class="settings-label" data-i18n="settings.language">界面语言</div>
-          <label class="settings-option"><input type="radio" name="set-lang" value="zh-CN" /><span>中文</span></label>
-          <label class="settings-option"><input type="radio" name="set-lang" value="en" /><span>English</span></label>
+          <label class="settings-option"
+            ><input type="radio" name="set-lang" value="zh-CN" /><span>中文</span></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-lang" value="en" /><span>English</span></label
+          >
           <div class="settings-hint" data-i18n="settings.languageHint">切换后立即生效</div>
         </div>
 
         <div class="settings-section">
           <div class="settings-label" data-i18n="settings.theme">主题外观</div>
-          <label class="settings-option"><input type="radio" name="set-theme" value="light" /><span data-i18n="settings.themeLight">浅色</span></label>
-          <label class="settings-option"><input type="radio" name="set-theme" value="dark" /><span data-i18n="settings.themeDark">深色</span></label>
+          <label class="settings-option"
+            ><input type="radio" name="set-theme" value="light" /><span
+              data-i18n="settings.themeLight"
+              >浅色</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-theme" value="dark" /><span
+              data-i18n="settings.themeDark"
+              >深色</span
+            ></label
+          >
         </div>
 
         <div class="settings-section">
@@ -53,24 +103,52 @@
               <span data-i18n="settings.autosave">自动保存到文件</span>
             </label>
           </div>
-          <div class="settings-hint" data-i18n="settings.autosaveHint">每 5 秒将已保存过的文件自动写回磁盘（桌面版可用）</div>
+          <div class="settings-hint" data-i18n="settings.autosaveHint">
+            每 5 秒将已保存过的文件自动写回磁盘（桌面版可用）
+          </div>
         </div>
 
         <div class="settings-section">
           <div class="settings-label" data-i18n="settings.imageStrategy">粘贴图片存储方式</div>
-          <label class="settings-option"><input type="radio" name="set-img" value="inline" /><span data-i18n="settings.imageInline">内联到文档（data URL，无需保存文件）</span></label>
-          <label class="settings-option"><input type="radio" name="set-img" value="assets" /><span data-i18n="settings.imageAssets">保存到文档同目录 assets/ 文件夹（需先将文档保存）</span></label>
-          <div class="settings-hint" data-i18n="settings.imageAssetsHint">选择 assets 模式时，未保存过的文档会自动降级为内联模式</div>
+          <label class="settings-option"
+            ><input type="radio" name="set-img" value="inline" /><span
+              data-i18n="settings.imageInline"
+              >内联到文档（data URL，无需保存文件）</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-img" value="assets" /><span
+              data-i18n="settings.imageAssets"
+              >保存到文档同目录 assets/ 文件夹（需先将文档保存）</span
+            ></label
+          >
+          <div class="settings-hint" data-i18n="settings.imageAssetsHint">
+            选择 assets 模式时，未保存过的文档会自动降级为内联模式
+          </div>
         </div>
       </div>
     </div>
 
     <div id="find-bar" class="find-bar" hidden>
-      <input id="find-input" class="find-input" data-i18n-placeholder="find.placeholder" placeholder="查找" />
+      <input
+        id="find-input"
+        class="find-input"
+        data-i18n-placeholder="find.placeholder"
+        placeholder="查找"
+      />
       <span id="find-count" class="find-count">0/0</span>
-      <button id="find-prev" class="tool-btn" data-i18n="find.prev" data-i18n-title="find.prev">↑</button>
-      <button id="find-next" class="tool-btn" data-i18n="find.next" data-i18n-title="find.next">↓</button>
-      <input id="replace-input" class="find-input" data-i18n-placeholder="find.replacePlaceholder" placeholder="替换为" />
+      <button id="find-prev" class="tool-btn" data-i18n="find.prev" data-i18n-title="find.prev">
+        ↑
+      </button>
+      <button id="find-next" class="tool-btn" data-i18n="find.next" data-i18n-title="find.next">
+        ↓
+      </button>
+      <input
+        id="replace-input"
+        class="find-input"
+        data-i18n-placeholder="find.replacePlaceholder"
+        placeholder="替换为"
+      />
       <button id="replace-one" class="tool-btn" data-i18n="find.replace">替换</button>
       <button id="replace-all" class="tool-btn" data-i18n="find.replaceAll">全部</button>
       <button id="find-close" class="tool-btn" data-i18n-title="find.close">✕</button>
@@ -85,7 +163,14 @@
         <div id="files-panel" class="sidebar-panel" hidden>
           <div class="sidebar-title">
             <span data-i18n="sidebar.files">文件</span>
-            <button id="open-folder-btn" class="tool-btn small" data-i18n="toolbar.newFolder" title="打开文件夹">＋文件夹</button>
+            <button
+              id="open-folder-btn"
+              class="tool-btn small"
+              data-i18n="toolbar.newFolder"
+              title="打开文件夹"
+            >
+              ＋文件夹
+            </button>
           </div>
           <div class="sidebar-subtitle" data-i18n="sidebar.recent">最近打开</div>
           <div id="recent-list" class="file-list"></div>

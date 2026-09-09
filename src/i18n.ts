@@ -41,7 +41,11 @@ export function setLocale(locale: string) {
 function resolve(path: string): string | undefined {
   const value = path
     .split('.')
-    .reduce<unknown>((obj, key) => (obj != null && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined), messages[currentLocale])
+    .reduce<unknown>(
+      (obj, key) =>
+        obj != null && typeof obj === 'object' ? (obj as Record<string, unknown>)[key] : undefined,
+      messages[currentLocale],
+    )
   return typeof value === 'string' ? value : undefined
 }
 

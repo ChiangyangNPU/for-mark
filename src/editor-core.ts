@@ -181,12 +181,16 @@ async function doReplaceEditor(markdown: string, options: ReplaceOptions) {
     let cancelled = false
     const cancel = () => {
       cancelled = true
-      for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.removeEventListener(type, cancel)
+      for (const type of ['wheel', 'pointerdown', 'keydown'])
+        scrollEl.removeEventListener(type, cancel)
     }
-    for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.addEventListener(type, cancel, { passive: true })
+    for (const type of ['wheel', 'pointerdown', 'keydown'])
+      scrollEl.addEventListener(type, cancel, { passive: true })
     window.setTimeout(() => {
-      for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.removeEventListener(type, cancel)
-      if (!cancelled && seq === replaceSeq && scrollEl.scrollTop < prevTop) scrollEl.scrollTop = prevTop
+      for (const type of ['wheel', 'pointerdown', 'keydown'])
+        scrollEl.removeEventListener(type, cancel)
+      if (!cancelled && seq === replaceSeq && scrollEl.scrollTop < prevTop)
+        scrollEl.scrollTop = prevTop
     }, 500)
   }
 }

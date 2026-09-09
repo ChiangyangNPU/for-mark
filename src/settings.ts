@@ -25,17 +25,23 @@ export function openSettings() {
   const overlay = document.getElementById('settings-overlay')
   if (!overlay) return
 
-  const langRadio = overlay.querySelector(`input[name="set-lang"][value="${getLocale()}"]`) as HTMLInputElement | null
+  const langRadio = overlay.querySelector(
+    `input[name="set-lang"][value="${getLocale()}"]`,
+  ) as HTMLInputElement | null
   if (langRadio) langRadio.checked = true
   const isDark = isDarkTheme()
-  const themeRadio = overlay.querySelector(`input[name="set-theme"][value="${isDark ? 'dark' : 'light'}"]`) as HTMLInputElement | null
+  const themeRadio = overlay.querySelector(
+    `input[name="set-theme"][value="${isDark ? 'dark' : 'light'}"]`,
+  ) as HTMLInputElement | null
   if (themeRadio) themeRadio.checked = true
   const autosaveBox = document.getElementById('set-autosave') as HTMLInputElement | null
   if (autosaveBox) {
     autosaveBox.checked = isAutosaveOn() && !!native
     autosaveBox.disabled = !native
   }
-  const imgRadio = overlay.querySelector(`input[name="set-img"][value="${imageStrategy}"]`) as HTMLInputElement | null
+  const imgRadio = overlay.querySelector(
+    `input[name="set-img"][value="${imageStrategy}"]`,
+  ) as HTMLInputElement | null
   if (imgRadio) imgRadio.checked = true
 
   overlay.hidden = false

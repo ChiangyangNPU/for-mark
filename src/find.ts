@@ -74,7 +74,11 @@ export function findStep(view: EditorView, delta: 1 | -1): FindState {
   if (!state.matches.length) return state
   state.index = (state.index + delta + state.matches.length) % state.matches.length
   const match = state.matches[state.index]
-  view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, match.from, match.to)).scrollIntoView())
+  view.dispatch(
+    view.state.tr
+      .setSelection(TextSelection.create(view.state.doc, match.from, match.to))
+      .scrollIntoView(),
+  )
   sync(view)
   return state
 }

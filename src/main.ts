@@ -37,13 +37,7 @@ import {
   updateTitle,
   markDirty,
 } from './tabs'
-import {
-  openDocument,
-  openFolder,
-  openPath,
-  saveDocument,
-  renderFilesSidebar,
-} from './files'
+import { openDocument, openFolder, openPath, saveDocument, renderFilesSidebar } from './files'
 import {
   mountEditor,
   currentMarkdown,
@@ -136,8 +130,12 @@ async function boot() {
     // 工具栏
     document.getElementById('import-btn')?.addEventListener('click', () => void openDocument())
     document.getElementById('export-btn')?.addEventListener('click', () => void saveDocument())
-    document.getElementById('source-mode-btn')?.addEventListener('click', () => void setSourceMode(!isSourceMode()))
-    document.getElementById('sidebar-outline-btn')?.addEventListener('click', () => toggleSidebar('outline'))
+    document
+      .getElementById('source-mode-btn')
+      ?.addEventListener('click', () => void setSourceMode(!isSourceMode()))
+    document
+      .getElementById('sidebar-outline-btn')
+      ?.addEventListener('click', () => toggleSidebar('outline'))
 
     // ⋯ 溢出菜单
     document.getElementById('menu-files-btn')?.addEventListener('click', () => {
@@ -231,7 +229,8 @@ async function boot() {
           const id = getActiveTabId()
           if (id) void closeTab(id)
         },
-        'export-html': () => void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
+        'export-html': () =>
+          void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled')),
         'export-pdf': () => void exportPdf(),
       }
       handlers[action]?.()

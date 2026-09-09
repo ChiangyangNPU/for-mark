@@ -75,7 +75,9 @@ function queueOpenPath(filePath) {
  * @returns {import('electron').BrowserWindow}
  */
 function dialogParent() {
-  return /** @type {import('electron').BrowserWindow} */ (mainWindow ?? BrowserWindow.getAllWindows()[0])
+  return /** @type {import('electron').BrowserWindow} */ (
+    mainWindow ?? BrowserWindow.getAllWindows()[0]
+  )
 }
 
 function buildMenu() {
@@ -88,13 +90,37 @@ function buildMenu() {
     {
       label: L('file'),
       submenu: [
-        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer(IPC.menu, 'open') },
-        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer(IPC.menu, 'open-folder') },
-        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer(IPC.menu, 'save') },
-        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer(IPC.menu, 'save-as') },
+        {
+          label: L('open'),
+          accelerator: 'CmdOrCtrl+O',
+          click: () => sendToRenderer(IPC.menu, 'open'),
+        },
+        {
+          label: L('openFolder'),
+          accelerator: 'Shift+CmdOrCtrl+O',
+          click: () => sendToRenderer(IPC.menu, 'open-folder'),
+        },
+        {
+          label: L('save'),
+          accelerator: 'CmdOrCtrl+S',
+          click: () => sendToRenderer(IPC.menu, 'save'),
+        },
+        {
+          label: L('saveAs'),
+          accelerator: 'Shift+CmdOrCtrl+S',
+          click: () => sendToRenderer(IPC.menu, 'save-as'),
+        },
         { type: 'separator' },
-        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer(IPC.menu, 'new-tab') },
-        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer(IPC.menu, 'close-tab') },
+        {
+          label: L('newTab'),
+          accelerator: 'CmdOrCtrl+T',
+          click: () => sendToRenderer(IPC.menu, 'new-tab'),
+        },
+        {
+          label: L('closeTab'),
+          accelerator: 'CmdOrCtrl+W',
+          click: () => sendToRenderer(IPC.menu, 'close-tab'),
+        },
         { type: 'separator' },
         {
           id: 'autosave',
@@ -113,8 +139,16 @@ function buildMenu() {
     {
       label: L('export'),
       submenu: [
-        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer(IPC.menu, 'export-html') },
-        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer(IPC.menu, 'export-pdf') },
+        {
+          label: L('exportHtml'),
+          accelerator: 'Shift+CmdOrCtrl+H',
+          click: () => sendToRenderer(IPC.menu, 'export-html'),
+        },
+        {
+          label: L('exportPdf'),
+          accelerator: 'CmdOrCtrl+P',
+          click: () => sendToRenderer(IPC.menu, 'export-pdf'),
+        },
       ],
     },
     { role: 'editMenu' },
@@ -187,9 +221,7 @@ function createWindow() {
           // 否则下次启动会"复活"被放弃的内容（与"放弃修改"语义冲突）。
           // 注意：此键名与渲染层 src/store.ts 的 DOC_KEY 一致，改键名时须同步
           try {
-            await mainWindow?.webContents.executeJavaScript(
-              "localStorage.removeItem('tmd:doc:v1')",
-            )
+            await mainWindow?.webContents.executeJavaScript("localStorage.removeItem('tmd:doc:v1')")
           } catch (err) {
             console.warn('[tmd] 清除恢复副本失败', err)
           }
@@ -239,7 +271,8 @@ ipcMain.handle(IPC.readDir, async (_event, dirPath) => {
       if (entry.name.startsWith('.')) continue
       const full = path.join(dir, entry.name)
       if (entry.isDirectory()) {
-        if (depth > 0) folders.push({ name: entry.name, path: full, children: await walk(full, depth - 1) })
+        if (depth > 0)
+          folders.push({ name: entry.name, path: full, children: await walk(full, depth - 1) })
       } else if (/\.(md|markdown)$/i.test(entry.name)) {
         files.push({ name: entry.name, path: full })
       }

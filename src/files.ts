@@ -20,7 +20,8 @@ import { pushRecent, recentList, clearDoc } from './store'
 import { renderFileTree, renderRecent } from './filetree'
 
 /** 已打开的文件夹树（文件树侧边栏数据） */
-let folderTree: { path: string; name: string; children: import('./filetree').FileEntry[] } | null = null
+let folderTree: { path: string; name: string; children: import('./filetree').FileEntry[] } | null =
+  null
 
 /** 记录一条最近打开文件并刷新侧边栏 */
 function pushRecentWithRender(path: string, name: string) {

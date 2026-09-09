@@ -12,7 +12,13 @@
  * @author chiangyang
  */
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
-import { Decoration, DecorationSet, type EditorView, type NodeView, type ViewMutationRecord } from '@milkdown/kit/prose/view'
+import {
+  Decoration,
+  DecorationSet,
+  type EditorView,
+  type NodeView,
+  type ViewMutationRecord,
+} from '@milkdown/kit/prose/view'
 import { Plugin, TextSelection } from '@milkdown/kit/prose/state'
 import { InputRule } from '@milkdown/kit/prose/inputrules'
 import { $inputRule, $nodeSchema, $prose, $remark, $view } from '@milkdown/kit/utils'
@@ -196,9 +202,13 @@ class MermaidView implements NodeView {
       // mermaid 图表类型按需懒加载：冷启动立刻渲染会因模块未就绪而报
       // "No diagram type detected"，短暂等待后重试即可恢复
       if (retry < 3 && message.includes('No diagram type detected')) {
-        window.setTimeout(() => {
-          if (seq === this.renderSeq && this.lastCode === code) void this.renderNow(code, retry + 1)
-        }, 400 * (retry + 1))
+        window.setTimeout(
+          () => {
+            if (seq === this.renderSeq && this.lastCode === code)
+              void this.renderNow(code, retry + 1)
+          },
+          400 * (retry + 1),
+        )
         return
       }
       // 语法错误时保留上一次成功的图，只显示错误提示
@@ -231,7 +241,10 @@ class MermaidView implements NodeView {
   }
 }
 
-const mermaidView = $view(mermaidSchema.node, () => (node, view, getPos) => new MermaidView(node, view, getPos))
+const mermaidView = $view(
+  mermaidSchema.node,
+  () => (node, view, getPos) => new MermaidView(node, view, getPos),
+)
 
 // ---------------------------------------------------------------------------
 // 4. 输入规则：输入 ```mermaid 立即转为图表块

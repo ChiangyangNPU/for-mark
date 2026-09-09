@@ -11,7 +11,11 @@ const schema = new Schema({
 })
 
 const doc = (texts: string[]) =>
-  schema.node('doc', null, texts.map((t) => schema.node('paragraph', null, schema.text(t))))
+  schema.node(
+    'doc',
+    null,
+    texts.map((t) => schema.node('paragraph', null, schema.text(t))),
+  )
 
 describe('findMatches', () => {
   it('空查询返回空', () => {
@@ -36,8 +40,6 @@ describe('findMatches', () => {
 
   it('同段重叠匹配不遗漏', () => {
     const d = doc(['aaa'])
-    expect(findMatches(d, 'aa')).toEqual([
-      { from: 1, to: 3 },
-    ])
+    expect(findMatches(d, 'aa')).toEqual([{ from: 1, to: 3 }])
   })
 })
