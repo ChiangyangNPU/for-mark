@@ -54,10 +54,6 @@ export function isSourceMode(): boolean {
   return sourceMode
 }
 
-export function getEditor(): Editor | null {
-  return editor
-}
-
 /** 刷新工具栏字数统计（去空白字符后的长度） */
 export function updateWordCount(markdown: string) {
   const el = document.getElementById('word-count')
@@ -121,14 +117,27 @@ export interface ReplaceOptions {
   scrollTop?: number
 }
 
+/** 重建序号：让异步收尾（rAF 解锁 / 延迟校正）能识别自己是否已过期 */
+let replaceSeq = 0
+
+/** 串行化：快速连续切换标签/打开文件时避免并发重建互相踩踏（产生多个编辑器实例） */
+let replaceQueue: Promise<void> = Promise.resolve()
+export function replaceEditor(markdown: string, options: ReplaceOptions = {}): Promise<void> {
+  replaceQueue = replaceQueue
+    .then(() => doReplaceEditor(markdown, options))
+    .catch((err) => console.error('[tmd] 编辑器重建失败', err))
+  return replaceQueue
+}
+
 /**
  * 销毁当前编辑器并用新文档重建（打开文件 / 切换标签 / 退出源码模式共用）。
  * preserveScroll：重建期间锁定 #editor 高度，防止内容塌陷导致滚动条闪烁、
  * scrollTop 被归零。新编辑器刚挂载时图片未解码、mermaid 未渲染，内容高度会
  * 先矮后高，所以锁定要持续到内容高度补回原值为止。
  */
-export async function replaceEditor(markdown: string, options: ReplaceOptions = {}) {
+async function doReplaceEditor(markdown: string, options: ReplaceOptions) {
   const { preserveScroll = false, scrollTop } = options
+  const seq = ++replaceSeq
   const scrollEl = document.querySelector('.page-scroll') as HTMLElement | null
   const editorEl = document.getElementById('editor')
   const prevTop = scrollTop ?? scrollEl?.scrollTop ?? 0
@@ -153,6 +162,8 @@ export async function replaceEditor(markdown: string, options: ReplaceOptions = 
     const inner = editorEl.firstElementChild as HTMLElement | null
     const deadline = performance.now() + 1500
     const unlock = () => {
+      // 已有更新的重建接管：放弃本轮的解锁与滚动恢复
+      if (seq !== replaceSeq) return
       const caughtUp = inner ? inner.offsetHeight >= prevHeight - 1 : true
       if (!caughtUp && performance.now() < deadline) {
         requestAnimationFrame(unlock)
@@ -165,7 +176,7 @@ export async function replaceEditor(markdown: string, options: ReplaceOptions = 
   } else if (scrollTop != null && scrollEl) {
     // 目标滚动位置：立即恢复；若异步内容（图片解码/mermaid 渲染）尚未增高，
     // scrollTop 会被钳到更小值，500ms 后校正一次。用户主动滚动（滚轮/拖拽/
-    // 键盘）即放弃校正，避免与用户操作打架
+    // 键盘）或已有更新的重建时放弃校正，避免与用户操作打架
     scrollEl.scrollTop = prevTop
     let cancelled = false
     const cancel = () => {
@@ -175,7 +186,7 @@ export async function replaceEditor(markdown: string, options: ReplaceOptions = 
     for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.addEventListener(type, cancel, { passive: true })
     window.setTimeout(() => {
       for (const type of ['wheel', 'pointerdown', 'keydown']) scrollEl.removeEventListener(type, cancel)
-      if (!cancelled && scrollEl.scrollTop < prevTop) scrollEl.scrollTop = prevTop
+      if (!cancelled && seq === replaceSeq && scrollEl.scrollTop < prevTop) scrollEl.scrollTop = prevTop
     }, 500)
   }
 }

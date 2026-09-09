@@ -7,6 +7,7 @@ import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { t } from './i18n'
+import { collectHeadings } from './toc'
 
 export interface OutlineItem {
   level: number
@@ -14,16 +15,11 @@ export interface OutlineItem {
   pos: number
 }
 
+/** 收集 1-3 级标题（复用 toc 的标题遍历，slug 计数结果丢弃） */
 export function collectOutline(doc: ProseNode): OutlineItem[] {
-  const items: OutlineItem[] = []
-  doc.descendants((node, pos) => {
-    if (node.type.name === 'heading') {
-      const level = node.attrs.level as number
-      if (level <= 3) items.push({ level, text: node.textContent, pos })
-    }
-    return true
-  })
-  return items
+  return collectHeadings(doc)
+    .filter((h) => h.level <= 3)
+    .map(({ level, text, pos }) => ({ level, text, pos }))
 }
 
 export function renderOutline(container: HTMLElement, items: OutlineItem[], view: EditorView) {

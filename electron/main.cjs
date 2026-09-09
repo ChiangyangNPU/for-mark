@@ -158,7 +158,8 @@ function createWindow() {
         if (response === 0) {
           rendererDirty = false
           // 用户明确放弃修改：绕过渲染层 beforeunload，需在主进程直接清除恢复副本，
-          // 否则下次启动会"复活"被放弃的内容（与"放弃修改"语义冲突）
+          // 否则下次启动会"复活"被放弃的内容（与"放弃修改"语义冲突）。
+          // 注意：此键名与渲染层 src/store.ts 的 DOC_KEY 一致，改键名时须同步
           try {
             await mainWindow?.webContents.executeJavaScript(
               "localStorage.removeItem('tmd:doc:v1')",

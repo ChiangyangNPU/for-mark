@@ -1,8 +1,9 @@
 /**
  * TMD - 轻量跨平台 Markdown 所见即所得编辑器
  *
- * 应用启动入口：负责整体状态编排（标签页 / 脏标记 / 主题 / 语言），
- * 以及各功能模块（编辑器、文件、查找、大纲、源码模式、导出）的装配与联动。
+ * 应用启动入口：纯装配——hooks/上下文注入、快捷键、菜单回调、侧边栏切换。
+ * 各领域逻辑分居 editor-core / tabs / files / settings / autosave / theme /
+ * store / findbar 等模块。
  *
  * 渲染层不含任何 Node/Electron API——系统能力统一经 src/native.ts 的
  * 受控接口访问，保证同一份代码可同时运行在 Electron 与浏览器中。

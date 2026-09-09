@@ -10,8 +10,7 @@
  */
 import zhCN from './locales/zh-CN.json'
 import en from './locales/en.json'
-
-const LOCALE_KEY = 'tmd:lang'
+import { LOCALE_KEY } from './store'
 
 const messages: Record<string, unknown> = {
   'zh-CN': zhCN,

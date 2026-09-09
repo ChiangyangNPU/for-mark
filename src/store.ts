@@ -6,11 +6,13 @@
  */
 import type { ImageStrategy } from './paste-image'
 
+// 注意：electron/main.cjs「放弃修改并关闭」路径硬编码了此键名，改键时须同步
 export const DOC_KEY = 'tmd:doc:v1'
 export const THEME_KEY = 'tmd:theme'
 export const RECENT_KEY = 'tmd:recent'
 export const IMAGE_STRATEGY_KEY = 'tmd:img'
 export const AUTOSAVE_KEY = 'tmd:autosave'
+export const LOCALE_KEY = 'tmd:lang'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {

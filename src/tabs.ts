@@ -95,7 +95,7 @@ export function updateTitle() {
 }
 
 /** 把任一标签页的未保存状态同步给 Electron 主进程（关闭确认用） */
-export function notifyDirty() {
+function notifyDirty() {
   native?.setDirty(hasDirty())
 }
 
