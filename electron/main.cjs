@@ -14,7 +14,7 @@
  *
  * @author chiangyang
  */
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron')
+const { app, BrowserWindow, Menu, dialog, ipcMain, session } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
 const IPC = require('./ipc.cjs')
@@ -159,6 +159,21 @@ function buildMenu() {
 }
 
 function createWindow() {
+  // CSP：注入到所有响应头，阻断渲染层加载非预期外部资源（防 XSS）。
+  // script-src 'self'：禁止 eval/内联脚本；style-src 含 'unsafe-inline'
+  // 是因为 Mermaid/KatTeX 生成的 SVG style 标签与 ProseMirror 装饰器依赖内联样式；
+  // img-src 含 data: blob: 支持粘贴图片的内联 data URL 与文件树图标。
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'",
+        ],
+      },
+    })
+  })
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,

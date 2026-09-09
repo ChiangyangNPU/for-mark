@@ -211,7 +211,9 @@ class MermaidView implements NodeView {
         )
         return
       }
-      // 语法错误时保留上一次成功的图，只显示错误提示
+      // 语法错误时清空旧图并显示错误信息（与 Typora/Obsidian 行为一致，
+      // 避免用户误以为旧图是当前语法的渲染结果）
+      this.renderArea.innerHTML = ''
       this.errorTip.textContent = `Mermaid 语法有误：${message}`
       this.errorTip.hidden = false
     }
