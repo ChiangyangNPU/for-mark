@@ -41,3 +41,28 @@ declare global {
 }
 
 export const native = window.tmdAPI
+
+/**
+ * IPC 通道名表：主进程与 preload 共用。
+ * 实际常量在 electron/ipc.cjs（JS 模块，Electron 直接 require 无需编译），
+ * 该文件用 JSDoc 标注为本接口——tsc checkJs 保证两侧键名对齐，
+ * 改通道名时只改这一处。
+ */
+export interface IpcChannels {
+  openFile: string
+  readFile: string
+  readDir: string
+  openFolder: string
+  saveFile: string
+  saveFileAs: string
+  exportAs: string
+  print: string
+  setDirty: string
+  menu: string
+  autosave: string
+  openPath: string
+  setLocaleInfo: string
+  ready: string
+  setAutosaveEnabled: string
+  saveImage: string
+}

@@ -9,20 +9,27 @@
  * - 文件与目录 IPC（open-file / read-file / read-dir / save-* / export-as / print）
  * - 文件关联（open-file 事件 + 单实例锁，双击 .md 直接在本应用打开）
  *
+ * 类型：本文件为 JS，经 JSDoc 标注参与 tsc checkJs 检查；
+ * IPC 通道名统一取自 ./ipc.cjs（与 src/native.ts 的 IpcChannels 对齐）。
+ *
  * @author chiangyang
  */
 const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
+const IPC = require('./ipc.cjs')
 
 const DEV_SERVER_URL = process.env.ELECTRON_RENDERER_URL
 
+/** @type {import('electron').BrowserWindow | null} */
 let mainWindow = null
+/** @type {import('electron').MenuItem | null} */
 let autosaveMenuItem = null
 let rendererDirty = false
 let autosaveEnabled = false
 
 // 菜单文案：默认中文，渲染层启动后把当前语言的文案经 IPC 发来并重建菜单
+/** @type {Record<string, string>} */
 const DEFAULT_MENU_LABELS = {
   file: '文件',
   open: '打开',
@@ -36,42 +43,58 @@ const DEFAULT_MENU_LABELS = {
   exportHtml: '导出 HTML',
   exportPdf: '打印 / 导出 PDF',
 }
+/** @type {Record<string, string>} */
 let menuLabels = { ...DEFAULT_MENU_LABELS }
 
+/** @param {string} key @returns {string} */
 const L = (key) => menuLabels[key] ?? DEFAULT_MENU_LABELS[key]
 
 // 文件关联：Finder 双击 .md 时 macOS 通过 open-file 事件传入路径；
 // 渲染层未就绪时先排队，收到 ready 信号后再发给渲染层
+/** @type {string[]} */
 const pendingOpenPaths = []
 let rendererReady = false
 
+/** @param {string} channel @param {unknown} payload */
 function sendToRenderer(channel, payload) {
   const win = mainWindow ?? BrowserWindow.getAllWindows()[0]
   win?.webContents.send(channel, payload)
 }
 
+/** @param {string} filePath */
 function queueOpenPath(filePath) {
   if (rendererReady && mainWindow) {
-    sendToRenderer('tmd:open-path', filePath)
+    sendToRenderer(IPC.openPath, filePath)
   } else {
     pendingOpenPaths.push(filePath)
   }
 }
 
+/**
+ * 对话框父窗口：对话框仅由渲染层 IPC 触发，彼时必有窗口存活。
+ * @returns {import('electron').BrowserWindow}
+ */
+function dialogParent() {
+  return /** @type {import('electron').BrowserWindow} */ (mainWindow ?? BrowserWindow.getAllWindows()[0])
+}
+
 function buildMenu() {
   const isMac = process.platform === 'darwin'
+  /** @type {import('electron').MenuItemConstructorOptions[]} */
+  const macAppMenu = [{ role: 'appMenu' }]
+  /** @type {import('electron').MenuItemConstructorOptions[]} */
   const template = [
-    ...(isMac ? [{ role: 'appMenu' }] : []),
+    ...(isMac ? macAppMenu : []),
     {
       label: L('file'),
       submenu: [
-        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer('tmd:menu', 'open') },
-        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer('tmd:menu', 'open-folder') },
-        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer('tmd:menu', 'save') },
-        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer('tmd:menu', 'save-as') },
+        { label: L('open'), accelerator: 'CmdOrCtrl+O', click: () => sendToRenderer(IPC.menu, 'open') },
+        { label: L('openFolder'), accelerator: 'Shift+CmdOrCtrl+O', click: () => sendToRenderer(IPC.menu, 'open-folder') },
+        { label: L('save'), accelerator: 'CmdOrCtrl+S', click: () => sendToRenderer(IPC.menu, 'save') },
+        { label: L('saveAs'), accelerator: 'Shift+CmdOrCtrl+S', click: () => sendToRenderer(IPC.menu, 'save-as') },
         { type: 'separator' },
-        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer('tmd:menu', 'new-tab') },
-        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer('tmd:menu', 'close-tab') },
+        { label: L('newTab'), accelerator: 'CmdOrCtrl+T', click: () => sendToRenderer(IPC.menu, 'new-tab') },
+        { label: L('closeTab'), accelerator: 'CmdOrCtrl+W', click: () => sendToRenderer(IPC.menu, 'close-tab') },
         { type: 'separator' },
         {
           id: 'autosave',
@@ -80,7 +103,7 @@ function buildMenu() {
           checked: autosaveEnabled,
           click: (item) => {
             autosaveEnabled = item.checked
-            sendToRenderer('tmd:autosave', item.checked)
+            sendToRenderer(IPC.autosave, item.checked)
           },
         },
         { type: 'separator' },
@@ -90,15 +113,15 @@ function buildMenu() {
     {
       label: L('export'),
       submenu: [
-        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer('tmd:menu', 'export-html') },
-        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer('tmd:menu', 'export-pdf') },
+        { label: L('exportHtml'), accelerator: 'Shift+CmdOrCtrl+H', click: () => sendToRenderer(IPC.menu, 'export-html') },
+        { label: L('exportPdf'), accelerator: 'CmdOrCtrl+P', click: () => sendToRenderer(IPC.menu, 'export-pdf') },
       ],
     },
     { role: 'editMenu' },
     { role: 'viewMenu' },
   ]
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
-  autosaveMenuItem = Menu.getApplicationMenu().getMenuItemById('autosave')
+  autosaveMenuItem = Menu.getApplicationMenu()?.getMenuItemById('autosave') ?? null
 }
 
 function createWindow() {
@@ -118,6 +141,9 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      // preload 需要 require 本地 ./ipc.cjs（IPC 通道名常量），沙箱化
+      // preload 无法加载本地模块。渲染层仍无 Node 权限，安全边界不变。
+      sandbox: false,
     },
   })
 
@@ -131,7 +157,7 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', () => {
     if (rendererReady) {
       while (pendingOpenPaths.length) {
-        sendToRenderer('tmd:open-path', pendingOpenPaths.shift())
+        sendToRenderer(IPC.openPath, pendingOpenPaths.shift())
       }
     }
   })
@@ -146,7 +172,7 @@ function createWindow() {
     if (!rendererDirty) return
     event.preventDefault()
     dialog
-      .showMessageBox(mainWindow, {
+      .showMessageBox(dialogParent(), {
         type: 'warning',
         message: '有未保存的修改',
         detail: '关闭前会丢失未保存的内容。',
@@ -175,10 +201,11 @@ function createWindow() {
 
 // ---------- IPC：文件与目录 ----------
 
+/** @type {import('electron').FileFilter[]} */
 const MD_FILTERS = [{ name: 'Markdown', extensions: ['md', 'markdown'] }]
 
-ipcMain.handle('tmd:open-file', async () => {
-  const result = await dialog.showOpenDialog(mainWindow, {
+ipcMain.handle(IPC.openFile, async () => {
+  const result = await dialog.showOpenDialog(dialogParent(), {
     filters: MD_FILTERS,
     properties: ['openFile'],
   })
@@ -188,16 +215,25 @@ ipcMain.handle('tmd:open-file', async () => {
   return { path: filePath, name: path.basename(filePath), content }
 })
 
-ipcMain.handle('tmd:read-file', async (_event, filePath) => {
+/** @param {unknown} _event @param {string} filePath */
+ipcMain.handle(IPC.readFile, async (_event, filePath) => {
   const content = await fs.readFile(filePath, 'utf-8')
   return { path: filePath, name: path.basename(filePath), content }
 })
 
 // 列出文件夹内的 Markdown 文件与子文件夹（两层），用于文件树侧边栏
-ipcMain.handle('tmd:read-dir', async (_event, dirPath) => {
+/** @param {unknown} _event @param {string} dirPath */
+ipcMain.handle(IPC.readDir, async (_event, dirPath) => {
+  /**
+   * @param {string} dir
+   * @param {number} depth
+   * @returns {Promise<import('../src/filetree.ts').FileEntry[]>}
+   */
   async function walk(dir, depth) {
     const entries = await fs.readdir(dir, { withFileTypes: true })
+    /** @type {import('../src/filetree.ts').FileEntry[]} */
     const folders = []
+    /** @type {import('../src/filetree.ts').FileEntry[]} */
     const files = []
     for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'))) {
       if (entry.name.startsWith('.')) continue
@@ -217,13 +253,15 @@ ipcMain.handle('tmd:read-dir', async (_event, dirPath) => {
   }
 })
 
-ipcMain.handle('tmd:save-file', async (_event, filePath, content) => {
+/** @param {unknown} _event @param {string} filePath @param {string} content */
+ipcMain.handle(IPC.saveFile, async (_event, filePath, content) => {
   await fs.writeFile(filePath, content, 'utf-8')
   return true
 })
 
-ipcMain.handle('tmd:save-file-as', async (_event, content) => {
-  const result = await dialog.showSaveDialog(mainWindow, {
+/** @param {unknown} _event @param {string} content */
+ipcMain.handle(IPC.saveFileAs, async (_event, content) => {
+  const result = await dialog.showSaveDialog(dialogParent(), {
     defaultPath: '未命名.md',
     filters: MD_FILTERS,
   })
@@ -233,39 +271,48 @@ ipcMain.handle('tmd:save-file-as', async (_event, content) => {
 })
 
 // 通用导出（HTML 等）：弹出另存为对话框并写入
-ipcMain.handle('tmd:export-as', async (_event, { content, defaultName, filters }) => {
-  const result = await dialog.showSaveDialog(mainWindow, { defaultPath: defaultName, filters })
+/**
+ * @param {unknown} _event
+ * @param {{ content: string, defaultName: string, filters: { name: string, extensions: string[] }[] }} options
+ */
+ipcMain.handle(IPC.exportAs, async (_event, options) => {
+  const { content, defaultName, filters } = options
+  const result = await dialog.showSaveDialog(dialogParent(), { defaultPath: defaultName, filters })
   if (result.canceled || !result.filePath) return null
   await fs.writeFile(result.filePath, content, 'utf-8')
   return { path: result.filePath, name: path.basename(result.filePath) }
 })
 
 // 打印 / 导出 PDF（走系统打印对话框）
-ipcMain.handle('tmd:print', async () => {
+ipcMain.handle(IPC.print, async () => {
   mainWindow?.webContents.print({ printBackground: true })
   return true
 })
 
 // 选择文件夹（文件树）
-ipcMain.handle('tmd:open-folder', async () => {
-  const result = await dialog.showOpenDialog(mainWindow, { properties: ['openDirectory'] })
+ipcMain.handle(IPC.openFolder, async () => {
+  const result = await dialog.showOpenDialog(dialogParent(), { properties: ['openDirectory'] })
   if (result.canceled || !result.filePaths[0]) return null
   return result.filePaths[0]
 })
 
 // 渲染层同步未保存状态
-ipcMain.on('tmd:set-dirty', (_event, dirty) => {
+/** @param {unknown} _event @param {unknown} dirty */
+ipcMain.on(IPC.setDirty, (_event, dirty) => {
   rendererDirty = !!dirty
 })
 
 // 设置面板同步自动保存开关（保持菜单勾选状态一致）
-ipcMain.on('tmd:set-autosave-enabled', (_event, enabled) => {
+/** @param {unknown} _event @param {unknown} enabled */
+ipcMain.on(IPC.setAutosaveEnabled, (_event, enabled) => {
   autosaveEnabled = !!enabled
   if (autosaveMenuItem) autosaveMenuItem.checked = autosaveEnabled
 })
 
 // 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）
-ipcMain.handle('tmd:save-image', async (_event, { dir, name, base64 }) => {
+/** @param {unknown} _event @param {{ dir: string, name: string, base64: string }} options */
+ipcMain.handle(IPC.saveImage, async (_event, options) => {
+  const { dir, name, base64 } = options
   const assetsDir = path.join(dir, 'assets')
   await fs.mkdir(assetsDir, { recursive: true })
   const filePath = path.join(assetsDir, name)
@@ -274,15 +321,16 @@ ipcMain.handle('tmd:save-image', async (_event, { dir, name, base64 }) => {
 })
 
 // 渲染层就绪：补发排队中的待打开文件
-ipcMain.on('tmd:ready', () => {
+ipcMain.on(IPC.ready, () => {
   rendererReady = true
   while (pendingOpenPaths.length) {
-    sendToRenderer('tmd:open-path', pendingOpenPaths.shift())
+    sendToRenderer(IPC.openPath, pendingOpenPaths.shift())
   }
 })
 
 // 渲染层把当前语言的菜单文案发来，重建菜单
-ipcMain.on('tmd:set-locale-info', (_event, labels) => {
+/** @param {unknown} _event @param {unknown} labels */
+ipcMain.on(IPC.setLocaleInfo, (_event, labels) => {
   if (labels && typeof labels === 'object') {
     menuLabels = { ...DEFAULT_MENU_LABELS, ...labels }
     buildMenu()

@@ -16,7 +16,12 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    // electron/*.cjs 用 JSDoc 标注参与类型检查：
+    // preload 按 NativeFileAPI、ipc 通道名按 IpcChannels 校验契约对齐
+    "allowJs": true,
+    "checkJs": true
   },
-  "include": ["src"]
+  "include": ["src", "electron"]
 }
