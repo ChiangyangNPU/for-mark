@@ -26,6 +26,7 @@ import { mermaidPlugins, setMermaidTheme } from './mermaid'
 import { pasteImage } from './paste-image'
 import { findPlugin, findSetQuery, findStep, findReplaceCurrent, findReplaceAll, findClear, findState } from './find'
 import { taskListClick } from './task-list'
+import { tocPlugins, insertToc, fillTocBlocks } from './toc'
 import { collectOutline, renderOutline } from './outline'
 import { exportHtml, exportPdf } from './export'
 import { createSourceEditor } from './sourcemode'
@@ -195,6 +196,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(pasteImage)
     .use(findPlugin)
     .use(taskListClick)
+    .use(tocPlugins)
     .use(imageSrcResolver)
     .create()
 }
@@ -246,7 +248,9 @@ async function replaceEditor(markdown: string, preserveScroll = false) {
 /** 取当前编辑器内容的 markdown 文本（源码模式下取 CodeMirror 内容） */
 function currentMarkdown(): string {
   if (sourceMode && cmView) return cmView.state.doc.toString()
-  return editor?.action(getMarkdown()) ?? ''
+  const markdown = editor?.action(getMarkdown()) ?? ''
+  // toc 节点序列化为空注释占位，此处按当前文档标题填充为真实链接列表
+  return pmView ? fillTocBlocks(markdown, pmView.state.doc) : markdown
 }
 
 // ---------------------------------------------------------------------------
@@ -722,6 +726,10 @@ async function boot() {
     })
     document.getElementById('menu-export-html-btn')?.addEventListener('click', () => {
       void exportHtml(currentMarkdown(), activeTab()?.name ?? t('tab.untitled'))
+      closeMoreMenu()
+    })
+    document.getElementById('menu-insert-toc-btn')?.addEventListener('click', () => {
+      if (pmView && !sourceMode) insertToc(pmView)
       closeMoreMenu()
     })
     document.getElementById('more-btn')?.addEventListener('click', (e) => {

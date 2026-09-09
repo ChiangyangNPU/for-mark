@@ -41,6 +41,10 @@
   "outline": {
     "empty": "暂无标题"
   },
+  "toc": {
+    "empty": "暂无标题，目录将在添加标题后自动生成",
+    "untitledHeading": "（空标题）"
+  },
   "files": {
     "empty": "暂无记录"
   },
@@ -67,6 +71,7 @@
     "autosave": "自动保存到文件",
     "export": "导出",
     "exportHtml": "导出 HTML",
+    "insertToc": "插入目录",
     "exportPdf": "打印 / 导出 PDF"
   },
   "settings": {

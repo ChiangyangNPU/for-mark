@@ -41,6 +41,10 @@
   "outline": {
     "empty": "No headings"
   },
+  "toc": {
+    "empty": "No headings yet. The TOC updates automatically as you add them.",
+    "untitledHeading": "(empty heading)"
+  },
   "files": {
     "empty": "No history"
   },
@@ -67,6 +71,7 @@
     "autosave": "Auto-save to File",
     "export": "Export",
     "exportHtml": "Export HTML",
+    "insertToc": "Insert TOC",
     "exportPdf": "Print / Export PDF"
   },
   "settings": {

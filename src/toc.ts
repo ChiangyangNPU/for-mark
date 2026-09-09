@@ -1,0 +1,311 @@
+/**
+ * 目录（TOC）块插件
+ *
+ * 功能：在文档中插入自动目录，收集全文 1-3 级标题按层级缩进展示，
+ * 标题增删改后自动刷新；点击目录项跳转到对应标题（与大纲面板同源）。
+ *
+ * 存储格式（Markdown 文本）：
+ *   <!-- TOC -->
+ *   - [标题一](#标题一)
+ *     - [子标题](#子标题)
+ *   <!-- /TOC -->
+ * 注释区间内是真实链接列表：GitHub / VS Code 等外部渲染器中目录可见可点；
+ * 本应用解析时整个区间被识别为一个原子 toc 节点，内容始终动态生成。
+ *
+ * 组成（与 mermaid.ts 同构）：
+ * 1. remark 转换：mdast 中 <!-- TOC --> 到 <!-- /TOC --> 区间合并为 toc 节点
+ * 2. 节点 schema：原子块（不可编辑光标进入，整体删除）
+ * 3. 节点视图：渲染目录列表，点击跳转
+ * 4. prose 插件：文档变化时刷新所有 toc 视图（toc 节点自身不变，update 不会触发）
+ * 5. 输入规则：空行输入 [TOC] 回车即插入目录块
+ *
+ * @author chiangyang
+ */
+import type { Node as ProseNode } from '@milkdown/kit/prose/model'
+import type { EditorView, NodeView, ViewMutationRecord } from '@milkdown/kit/prose/view'
+import { Plugin, TextSelection } from '@milkdown/kit/prose/state'
+import { InputRule } from '@milkdown/kit/prose/inputrules'
+import { $inputRule, $nodeSchema, $prose, $remark, $view } from '@milkdown/kit/utils'
+import { t } from './i18n'
+
+// ---------------------------------------------------------------------------
+// 1. remark 转换：<!-- TOC --> ... <!-- /TOC --> 区间 → toc 节点
+// ---------------------------------------------------------------------------
+
+type MdNode = { type: string; value?: string | null; children?: MdNode[] }
+
+const TOC_OPEN_RE = /<!--\s*TOC\s*-->/i
+const TOC_CLOSE_RE = /<!--\s*\/TOC\s*-->/i
+
+/** 取 mdast 节点的纯文本（html 节点取 value，段落等容器递归拼接 text 子节点） */
+function nodeText(node: MdNode): string {
+  if (node.type === 'html' || node.type === 'text') return node.value ?? ''
+  if (!node.children) return ''
+  return node.children.map(nodeText).join('')
+}
+
+/**
+ * Milkdown 的 remark-parse 关闭了原始 HTML（allowDangerousHtml: false，安全默认），
+ * `<!-- TOC -->` 在 mdast 中是"内容为注释文本的段落"而非 html 节点；
+ * 外部渲染器（GitHub 等）则按 HTML 注释解析。这里按节点文本识别，两种情况都兼容。
+ */
+function convertTocBlocks(node: MdNode): void {
+  if (!node.children) return
+  const children = node.children
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i]
+    if (child.type !== 'html' && child.type !== 'paragraph') {
+      convertTocBlocks(child)
+      continue
+    }
+    const text = nodeText(child).trim()
+    const openMatch = text.match(TOC_OPEN_RE)
+    if (!openMatch) continue
+    // 开始标记前若有其他非空白内容（与正文混在同一段落），保守起见不处理
+    if (text.slice(0, openMatch.index).trim() !== '') continue
+
+    // 结束标记在同一节点内（相邻注释被合并为一个 html 节点的情况）
+    if (TOC_CLOSE_RE.test(text)) {
+      children.splice(i, 1, { type: 'toc' })
+      continue
+    }
+    // 向后找含结束标记的节点（中间可能夹着 list 等目录链接内容）；
+    // 找不到则吞到容器末尾（容错，区间不闭合）
+    let end = -1
+    for (let j = i + 1; j < children.length; j++) {
+      const sib = children[j]
+      if ((sib.type === 'html' || sib.type === 'paragraph') && TOC_CLOSE_RE.test(nodeText(sib))) {
+        end = j
+        break
+      }
+    }
+    const count = (end === -1 ? children.length : end + 1) - i
+    children.splice(i, count, { type: 'toc' })
+  }
+}
+
+const tocRemark = $remark('tocRemark', () => () => (tree: unknown) => {
+  convertTocBlocks(tree as MdNode)
+})
+
+// ---------------------------------------------------------------------------
+// 2. 节点 schema（原子块）
+// ---------------------------------------------------------------------------
+
+const tocSchema = $nodeSchema('toc', () => ({
+  group: 'block',
+  atom: true,
+  defining: true,
+  parseDOM: [{ tag: 'div[data-type="toc"]' }],
+  toDOM: () => ['div', { 'data-type': 'toc', class: 'toc-block' }],
+  parseMarkdown: {
+    match: ({ type }) => type === 'toc',
+    runner: (state, _node, type) => {
+      state.addNode(type)
+    },
+  },
+  toMarkdown: {
+    match: (node) => node.type.name === 'toc',
+    // 输出两行注释文本段落（remark-stringify 原样输出文本）；
+    // 不能用 html 节点：Milkdown 序列化同样关闭了危险 HTML。
+    // 真实链接列表由 fillTocBlocks() 在序列化后填充。
+    runner: (state) => {
+      // addNode 签名为 (type, children?, value?, props?)：段落须传 text 子节点数组
+      state.addNode('paragraph', [{ type: 'text', value: '<!-- TOC -->' }])
+      state.addNode('paragraph', [{ type: 'text', value: '<!-- /TOC -->' }])
+    },
+  },
+}))
+
+// ---------------------------------------------------------------------------
+// 3. 锚点与标题收集（导出 HTML 与 markdown 填充共用，保证锚点一致）
+// ---------------------------------------------------------------------------
+
+export interface TocHeading {
+  level: number
+  text: string
+  pos: number
+  slug: string
+}
+
+/** GitHub 风格锚点：小写、空白转连字符、去标点、保留中文等 Unicode 字母 */
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s\-\u4e00-\u9fff]/g, '')
+    .replace(/\s+/g, '-')
+}
+
+/** 收集全文标题（全部级别，含同名标题的 -1/-2 计数后缀，与 GitHub 行为一致） */
+export function collectHeadings(doc: ProseNode): TocHeading[] {
+  const items: TocHeading[] = []
+  const slugCount = new Map<string, number>()
+  doc.descendants((node, pos) => {
+    if (node.type.name !== 'heading') return true
+    const text = node.textContent
+    let slug = slugify(text)
+    const seen = slugCount.get(slug) ?? 0
+    slugCount.set(slug, seen + 1)
+    if (seen > 0) slug = `${slug}-${seen}`
+    items.push({ level: node.attrs.level as number, text, pos, slug })
+    return true
+  })
+  return items
+}
+
+/** 链接文本中的反斜杠与方括号需转义，避免破坏 [text](url) 语法 */
+function escapeLinkText(text: string): string {
+  return text.replace(/([\\[\]])/g, '\\$1')
+}
+
+/**
+ * 序列化后处理：把 toc 节点产出的空注释占位替换为真实链接列表。
+ * 多个 TOC 块全部填充；文档无标题时列表为空（保留空区块）。
+ */
+export function fillTocBlocks(markdown: string, doc: ProseNode): string {
+  const headings = collectHeadings(doc).filter((h) => h.level <= 3)
+  const body = headings
+    .map((h) => `${'  '.repeat(h.level - 1)}- [${escapeLinkText(h.text)}](#${h.slug})`)
+    .join('\n')
+  // remark-stringify 会把行首 "<!" 转义为 "\<!"（防 HTML），
+  // 开闭标记前的可选反斜杠一并纳入匹配，避免残留可见的 "\"
+  return markdown.replace(
+    /\\?<!--\s*TOC\s*-->[\s\S]*?\\?<!--\s*\/TOC\s*-->/g,
+    `<!-- TOC -->\n\n${body}\n\n<!-- /TOC -->`,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 4. 节点视图：动态目录列表
+// ---------------------------------------------------------------------------
+
+/** 全部存活的 toc 视图，文档变化时统一刷新 */
+const tocViews = new Set<TocView>()
+
+class TocView implements NodeView {
+  dom: HTMLDivElement
+
+  private view: EditorView
+
+  constructor(_node: ProseNode, view: EditorView, _getPos: () => number | undefined) {
+    this.view = view
+    this.dom = document.createElement('div')
+    this.dom.className = 'toc-block'
+    this.dom.setAttribute('data-type', 'toc')
+    tocViews.add(this)
+    this.refresh(view.state.doc)
+  }
+
+  /** 按当前文档标题重建目录（由 prose 插件在 docChanged 时调用） */
+  refresh(doc: ProseNode) {
+    const items = collectHeadings(doc).filter((h) => h.level <= 3)
+    this.dom.textContent = ''
+
+    if (!items.length) {
+      const empty = document.createElement('div')
+      empty.className = 'toc-empty'
+      empty.textContent = t('toc.empty')
+      this.dom.appendChild(empty)
+      return
+    }
+
+    const list = document.createElement('div')
+    list.className = 'toc-list'
+    for (const item of items) {
+      const row = document.createElement('div')
+      row.className = `toc-item level-${item.level}`
+      row.textContent = item.text || t('toc.untitledHeading')
+      row.title = item.text
+      row.addEventListener('click', () => this.jumpTo(item.pos))
+      list.appendChild(row)
+    }
+    this.dom.appendChild(list)
+  }
+
+  /** 跳转到标题（与大纲面板相同的定位方式） */
+  private jumpTo(pos: number) {
+    const $pos = this.view.state.doc.resolve(pos + 1)
+    this.view.dispatch(
+      this.view.state.tr
+        .setSelection(TextSelection.near($pos, 1))
+        .scrollIntoView(),
+    )
+    this.view.focus()
+  }
+
+  update(node: ProseNode): boolean {
+    return node.type.name === 'toc'
+  }
+
+  // 目录 DOM 全部自行管理，不交给 ProseMirror
+  ignoreMutation(mutation: ViewMutationRecord): boolean {
+    if (mutation.type === 'selection') return false
+    return true
+  }
+
+  // 块内事件自行处理（点击跳转），阻止 ProseMirror 把原子块选为 NodeSelection
+  stopEvent(): boolean {
+    return true
+  }
+
+  destroy() {
+    tocViews.delete(this)
+  }
+}
+
+const tocView = $view(tocSchema.node, () => (node, view, getPos) => new TocView(node, view, getPos))
+
+// ---------------------------------------------------------------------------
+// 5. prose 插件：文档变化时刷新所有 toc 视图
+// ---------------------------------------------------------------------------
+
+const tocRefresh = $prose(
+  () =>
+    new Plugin({
+      view: () => ({
+        update(view: EditorView, prevState) {
+          if (view.state.doc !== prevState.doc) {
+            for (const v of tocViews) v.refresh(view.state.doc)
+          }
+        },
+      }),
+    }),
+)
+
+// ---------------------------------------------------------------------------
+// 6. 输入规则：空行输入 [TOC] 回车 → 目录块（仅顶层段落生效）
+// ---------------------------------------------------------------------------
+
+const tocInputRule = $inputRule(
+  (ctx) =>
+    new InputRule(/^\[toc\]$/i, (state, _match, start) => {
+      const type = tocSchema.type(ctx)
+      const $start = state.doc.resolve(start)
+      // depth === 1：匹配位置位于顶层段落（列表项/引用内 depth 更大，不处理）
+      if ($start.parent.type.name !== 'paragraph' || $start.depth !== 1) return null
+      return state.tr.replaceWith($start.before(1), $start.after(1), type.create())
+    }),
+)
+
+// ---------------------------------------------------------------------------
+// 7. 菜单命令：在光标处插入目录块
+// ---------------------------------------------------------------------------
+
+/** 在光标处插入 toc 节点（顶层段落整段替换，其他位置拆分段落插入） */
+export function insertToc(view: EditorView) {
+  const type = view.state.schema.nodes['toc']
+  if (!type) return
+  const { $from } = view.state.selection
+  const tr = view.state.tr
+  if ($from.parent.type.name === 'paragraph' && $from.depth === 1) {
+    tr.replaceWith($from.before(1), $from.after(1), type.create())
+  } else {
+    tr.replaceSelectionWith(type.create())
+  }
+  view.dispatch(tr)
+  view.focus()
+}
+
+/** 全部 toc 相关插件，统一给编辑器 .use() */
+export const tocPlugins = [tocRemark, tocSchema, tocView, tocRefresh, tocInputRule].flat()

@@ -5,6 +5,7 @@
  */
 import MarkdownIt from 'markdown-it'
 import { native } from './native'
+import { slugify } from './toc'
 
 const mdIt = new MarkdownIt({ html: false, linkify: true })
 
@@ -25,7 +26,12 @@ const EXPORT_CSS = `
   .mermaid { display: flex; justify-content: center; }
 `
 
-/** ```mermaid 代码块 → <pre class="mermaid">，由导出页里的 mermaid CDN 脚本渲染 */
+/**
+ * 渲染 markdown 为 HTML：
+ * - ```mermaid 代码块 → <pre class="mermaid">，由导出页里的 mermaid CDN 脚本渲染
+ * - TOC 注释标记行删除（保留中间真实链接列表，正常渲染为可点目录）
+ * - 标题加 GitHub 风格 id 锚点（与编辑器内 TOC 链接的 slug 规则一致）
+ */
 function renderMarkdown(markdown: string): string {
   const fence = mdIt.renderer.rules.fence ?? ((tokens, idx, options, _env, self) => self.renderToken(tokens, idx, options))
   mdIt.renderer.rules.fence = (tokens, idx, options, env, self) => {
@@ -35,7 +41,24 @@ function renderMarkdown(markdown: string): string {
     }
     return fence(tokens, idx, options, env, self)
   }
-  return mdIt.render(markdown)
+
+  // 同名标题计数：第一个为 slug，其后为 slug-1、slug-2（与 toc.ts collectHeadings 一致）
+  const slugCount = new Map<string, number>()
+  mdIt.renderer.rules.heading_open = (tokens, idx) => {
+    const token = tokens[idx]
+    const inline = tokens[idx + 1]
+    const text = inline && inline.type === 'inline' ? inline.content : ''
+    let slug = slugify(text)
+    const seen = slugCount.get(slug) ?? 0
+    slugCount.set(slug, seen + 1)
+    if (seen > 0) slug = `${slug}-${seen}`
+    return `<${token.tag} id="${mdIt.utils.escapeHtml(slug)}">`
+  }
+
+  // html:false 时注释会被转义成可见文本，直接移除 TOC 标记行（列表保留）；
+  // 兼容行首可能存在的转义反斜杠（remark-stringify 防 HTML 转义产物）
+  const cleaned = markdown.replace(/^[ \t]*\\?<!--\s*\/?TOC\s*-->[ \t]*$/gm, '')
+  return mdIt.render(cleaned)
 }
 
 export async function exportHtml(markdown: string, currentName: string) {
