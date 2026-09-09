@@ -25,6 +25,7 @@ import type { EditorView } from '@milkdown/kit/prose/view'
 import { mermaidPlugins, setMermaidTheme } from './mermaid'
 import { pasteImage } from './paste-image'
 import { findPlugin, findSetQuery, findStep, findReplaceCurrent, findReplaceAll, findClear, findState } from './find'
+import { taskListClick } from './task-list'
 import { collectOutline, renderOutline } from './outline'
 import { exportHtml, exportPdf } from './export'
 import { createSourceEditor } from './sourcemode'
@@ -193,6 +194,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(math)
     .use(pasteImage)
     .use(findPlugin)
+    .use(taskListClick)
     .use(imageSrcResolver)
     .create()
 }
