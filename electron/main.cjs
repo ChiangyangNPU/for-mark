@@ -14,7 +14,7 @@
  *
  * @author chiangyang
  */
-const { app, BrowserWindow, Menu, dialog, ipcMain, session } = require('electron')
+const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, session } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
 const IPC = require('./ipc.cjs')
@@ -222,6 +222,13 @@ function createWindow() {
       sandbox: false,
     },
   })
+
+  // Windows/Linux：隐藏原生菜单栏（Mac 的应用菜单在屏幕顶部系统菜单栏，
+  // 窗口内本就不显示），使窗口只留自定义工具栏一行，跨平台观感统一。
+  // 仅隐藏显示，菜单对象仍在，其绑定的快捷键（Ctrl+O/Ctrl+S/Ctrl+P 等）不受影响。
+  if (process.platform !== 'darwin') {
+    mainWindow.setMenuBarVisibility(false)
+  }
 
   if (DEV_SERVER_URL) {
     mainWindow.loadURL(DEV_SERVER_URL)
@@ -495,6 +502,13 @@ ipcMain.on(IPC.setDirty, (_event, dirty) => {
 ipcMain.on(IPC.setAutosaveEnabled, (_event, enabled) => {
   autosaveEnabled = !!enabled
   if (autosaveMenuItem) autosaveMenuItem.checked = autosaveEnabled
+})
+
+// 渲染层主题同步：nativeTheme.themeSource 驱动 Windows 原生标题栏深浅色
+// （DWM 深色模式，标题文字与按钮颜色随动）；Mac 标题栏已隐藏不受影响
+/** @param {unknown} _event @param {boolean} isDark */
+ipcMain.on(IPC.setThemeSource, (_event, isDark) => {
+  nativeTheme.themeSource = isDark ? 'dark' : 'light'
 })
 
 // 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）

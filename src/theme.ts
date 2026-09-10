@@ -6,6 +6,7 @@
  */
 import { setTheme } from './store'
 import { setMermaidTheme, reThemeMermaid } from './mermaid'
+import { native } from './native'
 
 /** 串行化：快速连续切换时避免渲染互相踩踏 */
 let themeApplying: Promise<void> = Promise.resolve()
@@ -20,6 +21,8 @@ export function applyTheme(isDark: boolean): Promise<void> {
 async function doApplyTheme(isDark: boolean) {
   document.body.classList.toggle('dark', isDark)
   setTheme(isDark)
+  // 同步给主进程：Windows 原生标题栏深浅色跟随主题
+  native?.setThemeSource(isDark)
   const button = document.getElementById('theme-toggle')
   if (button) button.textContent = isDark ? '☀️' : '🌙'
   setMermaidTheme(isDark ? 'dark' : 'default')

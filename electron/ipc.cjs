@@ -30,6 +30,7 @@ const channels = {
   updateDownload: 'tmd:update-download',
   updateInstall: 'tmd:update-install',
   updateAutoCheck: 'tmd:update-auto-check',
+  setThemeSource: 'tmd:set-theme-source',
 }
 
 module.exports = channels
