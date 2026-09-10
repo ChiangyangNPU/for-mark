@@ -7,7 +7,7 @@ import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { t } from './i18n'
-import { collectHeadings } from './toc'
+import { collectHeadings, scrollEditorPosIntoView } from './toc'
 
 export interface OutlineItem {
   level: number
@@ -37,8 +37,11 @@ export function renderOutline(container: HTMLElement, items: OutlineItem[], view
     row.textContent = item.text || '（无标题文本）'
     row.addEventListener('click', () => {
       const $pos = view.state.doc.resolve(item.pos + 1)
-      view.dispatch(view.state.tr.setSelection(TextSelection.near($pos, 1)).scrollIntoView())
+      const selection = TextSelection.near($pos, 1)
+      view.dispatch(view.state.tr.setSelection(selection))
       view.focus()
+      // 选区落位后按实际坐标滚动（不依赖 ProseMirror 的 scrollIntoView）
+      scrollEditorPosIntoView(view, selection.from)
     })
     container.appendChild(row)
   }

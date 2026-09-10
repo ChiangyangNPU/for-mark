@@ -192,6 +192,37 @@ export function fillTocBlocks(markdown: string, doc: ProseNode): string {
 /** 全部存活的 toc 视图，文档变化时统一刷新 */
 const tocViews = new Set<TocView>()
 
+/**
+ * 将编辑器内指定位置滚动到滚动容器的可视区内
+ *
+ * ProseMirror 自带的 scrollIntoView 对自定义滚动容器（.page-scroll，
+ * overflow-y: auto）不生效，因此手动定位该容器并计算滚动量。
+ * 供 TOC 块与大纲面板（outline.ts）共用。
+ *
+ * @param view ProseMirror 视图
+ * @param pos 目标文档位置（已完成选区设置）
+ * @author chiangyang
+ */
+export function scrollEditorPosIntoView(view: EditorView, pos: number): void {
+  const coords = view.coordsAtPos(pos)
+  if (!coords) return
+  // 从编辑器 DOM 向上找第一个内容溢出的祖先作为滚动容器
+  let scroller: HTMLElement | null = view.dom.parentElement
+  while (scroller && scroller.scrollHeight <= scroller.clientHeight) {
+    scroller = scroller.parentElement
+  }
+  if (!scroller) return
+  const box = scroller.getBoundingClientRect()
+  const margin = 16
+  if (coords.top < box.top + margin) {
+    // 目标在可视区上方：向上滚
+    scroller.scrollTop += coords.top - (box.top + margin)
+  } else if (coords.bottom > box.bottom - margin) {
+    // 目标在可视区下方：向下滚
+    scroller.scrollTop += coords.bottom - (box.bottom - margin)
+  }
+}
+
 class TocView implements NodeView {
   dom: HTMLDivElement
 
@@ -235,10 +266,11 @@ class TocView implements NodeView {
   /** 跳转到标题（与大纲面板相同的定位方式） */
   private jumpTo(pos: number) {
     const $pos = this.view.state.doc.resolve(pos + 1)
-    this.view.dispatch(
-      this.view.state.tr.setSelection(TextSelection.near($pos, 1)).scrollIntoView(),
-    )
+    const selection = TextSelection.near($pos, 1)
+    this.view.dispatch(this.view.state.tr.setSelection(selection))
     this.view.focus()
+    // 选区落位后按实际坐标滚动（不依赖 ProseMirror 的 scrollIntoView）
+    scrollEditorPosIntoView(this.view, selection.from)
   }
 
   update(node: ProseNode): boolean {

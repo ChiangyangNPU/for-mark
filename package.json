@@ -2,6 +2,7 @@
   "name": "tmd",
   "private": true,
   "version": "0.1.0",
+  "author": "chiangyang",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {

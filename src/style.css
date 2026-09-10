@@ -566,8 +566,13 @@ img {
 
 .workbench {
   display: flex;
+  /* 45px = 工具栏 44px + 1px 底边框；Windows/Linux 自绘标题栏额外占 32px */
   height: calc(100vh - 45px);
   overflow: hidden;
+}
+
+html.win .workbench {
+  height: calc(100vh - 77px);
 }
 
 .sidebar {
