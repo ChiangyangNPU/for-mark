@@ -78,9 +78,55 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* ---------------- 自绘窗口控制按钮（Windows/Linux） ----------------
+/* ---------------- 自绘标题栏（Windows/Linux） ----------------
+   独立一行：拖拽移动窗口 + 居中文件名 + 右缘窗口控制按钮。
    titleBarStyle: 'hidden' 后标题区属于页面，主题切换与内容区同帧同步；
-   public/boot.js 在首帧前挂 html.win 类，Mac 上本区块整体不显示 */
+   public/boot.js 在首帧前挂 html.win 类，Mac 上本区块整体不显示
+   （Mac 走 hiddenInset，红绿灯浮在工具栏左侧） */
+.titlebar {
+  display: none;
+}
+
+html.win .titlebar {
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 32px;
+  background: var(--bg);
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.titlebar-title {
+  /* 绝对定位于标题栏正中：不受右侧按钮数量影响，始终居中 */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 40%;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* Windows 下工具栏吸附在标题栏下方 */
+html.win .toolbar {
+  top: 32px;
+}
+
+/* Windows 的文件名在标题栏展示，工具栏里的同名元素隐藏（Mac 保留） */
+html.win .toolbar .win-title {
+  display: none;
+}
+
 .win-controls {
   display: none;
 }
@@ -89,11 +135,11 @@ html.win .win-controls {
   display: flex;
   align-items: center;
   align-self: stretch;
-  /* 抵消工具栏右内边距，控制按钮贴窗口右缘（原生观感） */
-  margin-right: -16px;
 }
 
 .win-btn {
+  /* 标题栏整体是拖拽区，按钮必须显式退出拖拽，否则点击被拖拽行为吞掉 */
+  -webkit-app-region: no-drag;
   display: flex;
   align-items: center;
   justify-content: center;

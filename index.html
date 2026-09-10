@@ -8,6 +8,32 @@
     <script src="./boot.js"></script>
   </head>
   <body>
+    <!-- 自绘标题栏（Windows/Linux）：拖拽移动窗口 + 居中文件名 + 右缘窗口控制按钮。
+         Mac 走 hiddenInset（红绿灯浮在工具栏上），此行经 CSS 隐藏 -->
+    <header class="titlebar">
+      <span id="titlebar-title" class="titlebar-title"></span>
+      <div class="win-controls" aria-label="窗口控制">
+        <button id="win-min" class="win-btn" tabindex="-1" aria-label="最小化">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <path d="M0 5h10" stroke="currentColor" stroke-width="1" />
+          </svg>
+        </button>
+        <button id="win-max" class="win-btn" tabindex="-1" aria-label="最大化/还原">
+          <svg class="ic-max" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" />
+          </svg>
+          <svg class="ic-restore" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <rect x="0.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" />
+            <path d="M2.5 2.5v-2h7v7h-2" fill="none" stroke="currentColor" />
+          </svg>
+        </button>
+        <button id="win-close" class="win-btn win-close" tabindex="-1" aria-label="关闭">
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
+            <path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" />
+          </svg>
+        </button>
+      </div>
+    </header>
     <header class="toolbar">
       <span id="win-title" class="win-title"></span>
       <span id="word-count" class="word-count">0 字</span>
@@ -47,28 +73,6 @@
       <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">
         🌙
       </button>
-      <!-- 自绘窗口控制按钮（public/boot.js 挂 html.win 类时显示，Mac 隐藏） -->
-      <div class="win-controls" aria-label="窗口控制">
-        <button id="win-min" class="win-btn" tabindex="-1" aria-label="最小化">
-          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <path d="M0 5h10" stroke="currentColor" stroke-width="1" />
-          </svg>
-        </button>
-        <button id="win-max" class="win-btn" tabindex="-1" aria-label="最大化/还原">
-          <svg class="ic-max" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <rect x="0.5" y="0.5" width="9" height="9" fill="none" stroke="currentColor" />
-          </svg>
-          <svg class="ic-restore" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <rect x="0.5" y="2.5" width="7" height="7" fill="none" stroke="currentColor" />
-            <path d="M2.5 2.5v-2h7v7h-2" fill="none" stroke="currentColor" />
-          </svg>
-        </button>
-        <button id="win-close" class="win-btn win-close" tabindex="-1" aria-label="关闭">
-          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-            <path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" />
-          </svg>
-        </button>
-      </div>
     </header>
 
     <div id="more-menu" class="more-menu" hidden>
