@@ -1,7 +1,7 @@
 {
   "name": "tmd",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
@@ -16,8 +16,8 @@
     "icon": "node scripts/make-icon.mjs",
     "cleanup": "bash scripts/cleanup-old-app.sh",
     "preview": "vite preview",
-    "dist": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "dist:dir": "npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
+    "dist": "npm run build && electron-builder --publish never",
+    "dist:dir": "npm run build && electron-builder --dir --publish never",
     "dist:install": "npm run dist:dir && rm -rf /Applications/TMD.app && cp -R release/mac-arm64/TMD.app /Applications/"
   },
   "devDependencies": {
@@ -71,11 +71,15 @@
     "mac": {
       "target": "dmg",
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns"
+      "icon": "build/icon.icns",
+      "identity": null
     },
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-${arch}-Setup.${ext}"
     },
     "publish": [
       {
