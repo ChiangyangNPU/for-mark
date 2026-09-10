@@ -31,6 +31,10 @@ const channels = {
   updateInstall: 'tmd:update-install',
   updateAutoCheck: 'tmd:update-auto-check',
   setThemeSource: 'tmd:set-theme-source',
+  winMinimize: 'tmd:win-minimize',
+  winMaximizeToggle: 'tmd:win-maximize-toggle',
+  winClose: 'tmd:win-close',
+  winMaxChanged: 'tmd:win-max-changed',
 }
 
 module.exports = channels

@@ -54,6 +54,14 @@ export interface NativeFileAPI {
   setAutoCheckUpdate(enabled: boolean): void
   /** 同步主题给主进程：标题栏/窗口底色切换完成后返回，渲染层再切页面使两者视觉同步 */
   setThemeSource(isDark: boolean): Promise<void>
+  /** 自绘标题栏（Windows/Linux）：最小化窗口 */
+  winMinimize(): void
+  /** 自绘标题栏（Windows/Linux）：最大化/还原切换 */
+  winMaximizeToggle(): void
+  /** 自绘标题栏（Windows/Linux）：关闭窗口（仍走未保存关闭确认流程） */
+  winClose(): void
+  /** 订阅窗口最大化状态变化（自绘 □/❐ 图标切换用） */
+  onWindowMaximize(callback: (isMax: boolean) => void): void
 }
 
 /**
@@ -106,4 +114,8 @@ export interface IpcChannels {
   updateInstall: string
   updateAutoCheck: string
   setThemeSource: string
+  winMinimize: string
+  winMaximizeToggle: string
+  winClose: string
+  winMaxChanged: string
 }

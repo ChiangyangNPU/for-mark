@@ -97,7 +97,8 @@ async function boot() {
     // 菜单栏文案跟随当前语言（Electron 主进程据此重建菜单）
     native?.setLocaleInfo(menuLabels())
     const dark = getTheme() === 'dark'
-    document.body.classList.toggle('dark', dark)
+    // 幂等再同步：<head> 内联脚本已在首帧前挂好 html.dark，这里兜底保持一致
+    document.documentElement.classList.toggle('dark', dark)
     setMermaidTheme(dark ? 'dark' : 'default')
 
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
@@ -177,8 +178,15 @@ async function boot() {
     })
 
     document.getElementById('theme-toggle')?.addEventListener('click', () => {
-      void applyTheme(!document.body.classList.contains('dark'))
+      void applyTheme(!document.documentElement.classList.contains('dark'))
     })
+
+    // 自绘标题栏窗口控制（html.win 时显示；双击工具栏拖拽区由系统处理）
+    document.getElementById('win-min')?.addEventListener('click', () => native?.winMinimize())
+    const winMaxBtn = document.getElementById('win-max')
+    winMaxBtn?.addEventListener('click', () => native?.winMaximizeToggle())
+    document.getElementById('win-close')?.addEventListener('click', () => native?.winClose())
+    native?.onWindowMaximize((isMax) => winMaxBtn?.classList.toggle('maximized', isMax))
 
     // 设置面板
     document.getElementById('menu-settings-btn')?.addEventListener('click', () => {

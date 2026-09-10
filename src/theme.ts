@@ -22,7 +22,8 @@ async function doApplyTheme(isDark: boolean) {
   // 先切壳层（原生标题栏/窗口底色），等 IPC 返回后渲染层再翻页面——
   // 两者落在同一视觉瞬间，避免"页面已变、标题栏慢半拍"的差异感
   await native?.setThemeSource(isDark)
-  document.body.classList.toggle('dark', isDark)
+  // 深色类挂在 <html> 上（而非 body）：与 index.html 首帧防闪内联脚本同挂载点
+  document.documentElement.classList.toggle('dark', isDark)
   setTheme(isDark)
   const button = document.getElementById('theme-toggle')
   if (button) button.textContent = isDark ? '☀️' : '🌙'
@@ -32,5 +33,5 @@ async function doApplyTheme(isDark: boolean) {
 
 /** 当前是否深色主题（设置面板反射用） */
 export function isDarkTheme(): boolean {
-  return document.body.classList.contains('dark')
+  return document.documentElement.classList.contains('dark')
 }

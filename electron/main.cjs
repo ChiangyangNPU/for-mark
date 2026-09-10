@@ -219,9 +219,12 @@ function createWindow() {
     backgroundColor: shellThemeSource === 'dark' ? SHELL_BG.dark : SHELL_BG.light,
     // Mac：隐藏标题栏文字，红绿灯浮在自定义工具栏上（Typora 式沉浸）
     // trafficLightPosition：hiddenInset 的默认垂直位置偏低，按 44px 工具栏手工居中
+    // Windows/Linux：完全自绘标题栏（工具栏右侧 ─ □ ✕ 按钮）——原生标题栏由
+    // DWM 独立绘制，主题切换无法与内容区同一帧变化；自绘后标题区属于页面，
+    // 一次重绘全部同步。双击工具栏拖拽区仍由系统处理最大化/还原
     ...(process.platform === 'darwin'
       ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 16 } }
-      : {}),
+      : { titleBarStyle: 'hidden' }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
@@ -257,6 +260,11 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  // 最大化状态推送：渲染层据此切换自绘按钮的 □/❐ 图标
+  const pushMaximized = () => sendToRenderer(IPC.winMaxChanged, mainWindow?.isMaximized() === true)
+  mainWindow.on('maximize', pushMaximized)
+  mainWindow.on('unmaximize', pushMaximized)
 
   // 未保存关闭确认：渲染层通过 IPC 同步脏标记，这里用原生对话框拦截关闭。
   // 不能在渲染层用 window.confirm —— Electron 关闭流程中它不可靠，会导致窗口无法关闭。
@@ -524,6 +532,16 @@ ipcMain.handle(IPC.setThemeSource, (_event, isDark) => {
   mainWindow?.setBackgroundColor(shellThemeSource === 'dark' ? SHELL_BG.dark : SHELL_BG.light)
   saveShellState({ themeSource: shellThemeSource })
 })
+
+// 自绘标题栏窗口控制（Windows/Linux 工具栏右侧 ─ □ ✕；Mac 无此 UI）。
+// close() 走统一 close 流程：有未保存修改仍会先弹原生确认对话框
+ipcMain.on(IPC.winMinimize, () => mainWindow?.minimize())
+ipcMain.on(IPC.winMaximizeToggle, () => {
+  if (!mainWindow) return
+  if (mainWindow.isMaximized()) mainWindow.unmaximize()
+  else mainWindow.maximize()
+})
+ipcMain.on(IPC.winClose, () => mainWindow?.close())
 
 // 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）
 /** @param {unknown} _event @param {{ dir: string, name: string, base64: string }} options */

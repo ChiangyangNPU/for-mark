@@ -57,6 +57,16 @@ const api = {
   setAutoCheckUpdate: (enabled) => ipcRenderer.send(IPC.updateAutoCheck, enabled),
   /** 同步主题给主进程：标题栏/窗口底色切换完成后返回，渲染层再切页面使两者视觉同步 */
   setThemeSource: (isDark) => ipcRenderer.invoke(IPC.setThemeSource, isDark),
+  /** 自绘标题栏（Windows/Linux）：最小化窗口 */
+  winMinimize: () => ipcRenderer.send(IPC.winMinimize),
+  /** 自绘标题栏（Windows/Linux）：最大化/还原切换 */
+  winMaximizeToggle: () => ipcRenderer.send(IPC.winMaximizeToggle),
+  /** 自绘标题栏（Windows/Linux）：关闭窗口（仍走未保存关闭确认流程） */
+  winClose: () => ipcRenderer.send(IPC.winClose),
+  /** 订阅窗口最大化状态变化（自绘 □/❐ 图标切换用） */
+  onWindowMaximize: (callback) => {
+    ipcRenderer.on(IPC.winMaxChanged, (_event, isMax) => callback(isMax))
+  },
 }
 
 contextBridge.exposeInMainWorld('tmdAPI', api)
