@@ -52,8 +52,8 @@ export interface NativeFileAPI {
   onUpdateStatus(callback: (status: UpdateStatus) => void): void
   /** 同步"启动时自动检查更新"开关给主进程 */
   setAutoCheckUpdate(enabled: boolean): void
-  /** 同步主题给主进程：驱动 Windows 原生标题栏深浅色 */
-  setThemeSource(isDark: boolean): void
+  /** 同步主题给主进程：标题栏/窗口底色切换完成后返回，渲染层再切页面使两者视觉同步 */
+  setThemeSource(isDark: boolean): Promise<void>
 }
 
 /**

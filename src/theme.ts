@@ -19,10 +19,11 @@ export function applyTheme(isDark: boolean): Promise<void> {
 }
 
 async function doApplyTheme(isDark: boolean) {
+  // 先切壳层（原生标题栏/窗口底色），等 IPC 返回后渲染层再翻页面——
+  // 两者落在同一视觉瞬间，避免"页面已变、标题栏慢半拍"的差异感
+  await native?.setThemeSource(isDark)
   document.body.classList.toggle('dark', isDark)
   setTheme(isDark)
-  // 同步给主进程：Windows 原生标题栏深浅色跟随主题
-  native?.setThemeSource(isDark)
   const button = document.getElementById('theme-toggle')
   if (button) button.textContent = isDark ? '☀️' : '🌙'
   setMermaidTheme(isDark ? 'dark' : 'default')

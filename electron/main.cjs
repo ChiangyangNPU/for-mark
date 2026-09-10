@@ -17,6 +17,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, session } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
+const fsSync = require('node:fs')
 const IPC = require('./ipc.cjs')
 // 自动更新：electron-updater。开发模式（app.isPackaged === false）下
 // checkForUpdates 会因找不到 latest.yml 报错，统一由 error 事件处理。
@@ -42,6 +43,13 @@ const DEV_SERVER_URL = process.env.ELECTRON_RENDERER_URL
 
 /** @type {import('electron').BrowserWindow | null} */
 let mainWindow = null
+
+// 壳层主题状态（'system' | 'dark' | 'light'）：启动时从 shell-state.json 恢复，
+// 渲染层切主题时经 IPC 更新。决定窗口底色，原生标题栏深浅由 nativeTheme 驱动
+/** @type {'system' | 'dark' | 'light'} */
+let shellThemeSource = 'system'
+/** 窗口底色与渲染层 --bg 变量保持一致，避免启动/切换主题时合成层白底露出 */
+const SHELL_BG = { dark: '#1e2127', light: '#ffffff' }
 /** @type {import('electron').MenuItem | null} */
 let autosaveMenuItem = null
 let rendererDirty = false
@@ -207,7 +215,8 @@ function createWindow() {
     minWidth: 860,
     minHeight: 560,
     title: 'TMD',
-    backgroundColor: '#ffffff',
+    // 窗口底色跟随主题：深色启动时首帧即为深色底，杜绝白闪
+    backgroundColor: shellThemeSource === 'dark' ? SHELL_BG.dark : SHELL_BG.light,
     // Mac：隐藏标题栏文字，红绿灯浮在自定义工具栏上（Typora 式沉浸）
     // trafficLightPosition：hiddenInset 的默认垂直位置偏低，按 44px 工具栏手工居中
     ...(process.platform === 'darwin'
@@ -505,10 +514,15 @@ ipcMain.on(IPC.setAutosaveEnabled, (_event, enabled) => {
 })
 
 // 渲染层主题同步：nativeTheme.themeSource 驱动 Windows 原生标题栏深浅色
-// （DWM 深色模式，标题文字与按钮颜色随动）；Mac 标题栏已隐藏不受影响
-/** @param {unknown} _event @param {boolean} isDark */
-ipcMain.on(IPC.setThemeSource, (_event, isDark) => {
-  nativeTheme.themeSource = isDark ? 'dark' : 'light'
+// （DWM 深色模式，标题文字与按钮颜色随动）；Mac 标题栏已隐藏不受影响。
+// 同步切换窗口底色（合成层颜色），消除切换瞬间内容区的白底闪烁；
+// 持久化到 shell-state.json，下次启动在窗口创建前恢复。
+// 用 handle + invoke：壳层切换完成后才返回，渲染层随后再翻页面，两者视觉同步
+ipcMain.handle(IPC.setThemeSource, (_event, isDark) => {
+  shellThemeSource = isDark ? 'dark' : 'light'
+  nativeTheme.themeSource = shellThemeSource
+  mainWindow?.setBackgroundColor(shellThemeSource === 'dark' ? SHELL_BG.dark : SHELL_BG.light)
+  saveShellState({ themeSource: shellThemeSource })
 })
 
 // 粘贴图片落盘：写入文档同目录 assets/ 文件夹（base64 解码后写入）
@@ -600,7 +614,49 @@ app.on('open-file', (event, filePath) => {
   queueOpenPath(filePath)
 })
 
+// ---------- 壳层持久化状态 ----------
+// 目前仅存主题。存于 userData/shell-state.json（随应用卸载清理）。
+// 启动时在 createWindow() 之前恢复，使两平台的启动外观从第一帧起就正确——
+// 纯统一实现，不含平台分支。
+
+/** 壳层状态文件路径 */
+const shellStateFile = path.join(app.getPath('userData'), 'shell-state.json')
+
+/**
+ * 读取壳层持久化状态
+ *
+ * 文件缺失或解析失败时静默返回空对象（首次启动 / 文件损坏均视为无状态）。
+ *
+ * @returns {Record<string, unknown>} 已保存的状态，可能为空对象
+ */
+function readShellState() {
+  try {
+    const state = JSON.parse(fsSync.readFileSync(shellStateFile, 'utf-8'))
+    return state && typeof state === 'object' ? state : {}
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * 增量写入壳层持久化状态（fire-and-forget，调用方无需等待落盘）
+ *
+ * @param {Record<string, unknown>} patch 要合并的状态片段
+ * @returns {void}
+ */
+function saveShellState(patch) {
+  const state = { ...readShellState(), ...patch }
+  fs.writeFile(shellStateFile, JSON.stringify(state, null, 2), 'utf-8').catch(() => {})
+}
+
 app.whenReady().then(() => {
+  // 窗口创建前恢复上次主题：nativeTheme 与窗口底色在首帧渲染前生效，
+  // Windows 标题栏与渲染层 prefers-color-scheme 启动即为正确外观
+  const savedTheme = readShellState().themeSource
+  if (savedTheme === 'dark' || savedTheme === 'light') {
+    shellThemeSource = savedTheme
+    nativeTheme.themeSource = savedTheme
+  }
   buildMenu()
   createWindow()
   // 装配自动更新事件监听（autoCheckUpdateEnabled 由渲染层经 IPC 同步）

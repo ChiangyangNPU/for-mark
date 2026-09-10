@@ -42,12 +42,10 @@ body {
   overflow: hidden;
   background: var(--bg);
   color: var(--fg);
+  /* 不加背景/前景 transition：全页 0.2s 渐变在切换主题时视觉上呈白闪 */
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', sans-serif;
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
 }
 
 /* ---------------- 顶栏 ---------------- */

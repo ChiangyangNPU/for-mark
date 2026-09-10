@@ -55,8 +55,8 @@ const api = {
   },
   /** 同步"启动时自动检查更新"开关给主进程 */
   setAutoCheckUpdate: (enabled) => ipcRenderer.send(IPC.updateAutoCheck, enabled),
-  /** 同步主题给主进程：Windows 切换原生标题栏深浅色 */
-  setThemeSource: (isDark) => ipcRenderer.send(IPC.setThemeSource, isDark),
+  /** 同步主题给主进程：标题栏/窗口底色切换完成后返回，渲染层再切页面使两者视觉同步 */
+  setThemeSource: (isDark) => ipcRenderer.invoke(IPC.setThemeSource, isDark),
 }
 
 contextBridge.exposeInMainWorld('tmdAPI', api)
