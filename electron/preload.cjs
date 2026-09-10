@@ -43,6 +43,18 @@ const api = {
   setAutosaveEnabled: (enabled) => ipcRenderer.send(IPC.setAutosaveEnabled, enabled),
   /** 粘贴图片落盘：写入文档同目录 assets/ 文件夹 */
   saveImage: (options) => ipcRenderer.invoke(IPC.saveImage, options),
+  /** 手动触发检查更新（设置面板"检查更新"按钮） */
+  checkForUpdates: () => ipcRenderer.invoke(IPC.updateCheck),
+  /** 用户同意后触发下载 */
+  downloadUpdate: () => ipcRenderer.invoke(IPC.updateDownload),
+  /** 安装已下载的更新并重启 */
+  installUpdate: () => ipcRenderer.invoke(IPC.updateInstall),
+  /** 监听主进程推送的更新状态变化 */
+  onUpdateStatus: (callback) => {
+    ipcRenderer.on(IPC.updateStatus, (_event, status) => callback(status))
+  },
+  /** 同步"启动时自动检查更新"开关给主进程 */
+  setAutoCheckUpdate: (enabled) => ipcRenderer.send(IPC.updateAutoCheck, enabled),
 }
 
 contextBridge.exposeInMainWorld('tmdAPI', api)

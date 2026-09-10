@@ -87,6 +87,17 @@
     "imageInline": "Inline in document (data URL, no file needed)",
     "imageAssets": "Save to assets/ folder next to the document (save the document first)",
     "imageAssetsHint": "Documents that were never saved fall back to inline mode",
-    "close": "Close"
+    "close": "Close",
+    "update": "Updates",
+    "updateAutoCheck": "Check for updates on startup",
+    "updateAutoCheckHint": "Automatically check for new versions on startup",
+    "updateCheck": "Check for Updates",
+    "updateChecking": "Checking…",
+    "updateAvailable": "New version {version} available",
+    "updateNotAvailable": "You're on the latest version",
+    "updateDownloading": "Downloading {percent}%",
+    "updateDownloaded": "Downloaded. Restart to install.",
+    "updateError": "Update failed: {message}",
+    "updateInstall": "Restart Now"
   }
 }

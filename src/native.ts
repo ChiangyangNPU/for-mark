@@ -42,7 +42,30 @@ export interface NativeFileAPI {
     name: string
     base64: string
   }): Promise<{ name: string } | null>
+  /** 手动触发检查更新（设置面板"检查更新"按钮） */
+  checkForUpdates(): Promise<void>
+  /** 用户同意后触发下载 */
+  downloadUpdate(): void
+  /** 安装已下载的更新并重启 */
+  installUpdate(): void
+  /** 监听主进程推送的更新状态变化 */
+  onUpdateStatus(callback: (status: UpdateStatus) => void): void
+  /** 同步"启动时自动检查更新"开关给主进程 */
+  setAutoCheckUpdate(enabled: boolean): void
 }
+
+/**
+ * 更新状态：主进程通过 IPC 推送给渲染层，渲染层据此更新设置面板 UI。
+ * 弹窗确认（是否下载 / 下载完成重启）由主进程用原生 dialog 处理。
+ */
+export type UpdateStatus =
+  | { status: 'idle' }
+  | { status: 'checking' }
+  | { status: 'available'; version: string; releaseNotes?: string }
+  | { status: 'not-available' }
+  | { status: 'downloading'; percent: number }
+  | { status: 'downloaded' }
+  | { status: 'error'; message: string }
 
 declare global {
   interface Window {
@@ -75,4 +98,9 @@ export interface IpcChannels {
   ready: string
   setAutosaveEnabled: string
   saveImage: string
+  updateCheck: string
+  updateStatus: string
+  updateDownload: string
+  updateInstall: string
+  updateAutoCheck: string
 }

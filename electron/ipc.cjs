@@ -25,6 +25,11 @@ const channels = {
   ready: 'tmd:ready',
   setAutosaveEnabled: 'tmd:set-autosave-enabled',
   saveImage: 'tmd:save-image',
+  updateCheck: 'tmd:update-check',
+  updateStatus: 'tmd:update-status',
+  updateDownload: 'tmd:update-download',
+  updateInstall: 'tmd:update-install',
+  updateAutoCheck: 'tmd:update-auto-check',
 }
 
 module.exports = channels

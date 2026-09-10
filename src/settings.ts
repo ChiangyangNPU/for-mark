@@ -4,10 +4,11 @@
  * 图片策略的状态由本模块持有（粘贴上下文经 getCurrentImageStrategy 读取）。
  */
 import { native } from './native'
-import { applyDomTexts, menuLabels, getLocale, setLocale } from './i18n'
+import type { UpdateStatus } from './native'
+import { applyDomTexts, menuLabels, getLocale, setLocale, t } from './i18n'
 import { isDarkTheme, applyTheme } from './theme'
 import { isAutosaveOn, setAutosaveOn } from './autosave'
-import { getImageStrategy, setImageStrategy } from './store'
+import { getImageStrategy, setImageStrategy, getAutoCheckUpdate, setAutoCheckUpdate } from './store'
 import { renderTabs, updateTitle } from './tabs'
 import { currentMarkdown, updateWordCount } from './editor-core'
 import type { ImageStrategy } from './paste-image'
@@ -43,6 +44,8 @@ export function openSettings() {
     `input[name="set-img"][value="${imageStrategy}"]`,
   ) as HTMLInputElement | null
   if (imgRadio) imgRadio.checked = true
+  const autoCheckBox = document.getElementById('set-auto-check-update') as HTMLInputElement | null
+  if (autoCheckBox) autoCheckBox.checked = getAutoCheckUpdate()
 
   overlay.hidden = false
 }
@@ -83,4 +86,72 @@ export function wireSettings() {
       setImageStrategy(imageStrategy)
     })
   })
+
+  // ---------- 更新 ----------
+  const autoCheckBox = document.getElementById('set-auto-check-update') as HTMLInputElement | null
+  if (autoCheckBox) {
+    autoCheckBox.addEventListener('change', () => {
+      setAutoCheckUpdate(autoCheckBox.checked)
+      native?.setAutoCheckUpdate(autoCheckBox.checked)
+    })
+  }
+
+  const updateCheckBtn = document.getElementById('update-check-btn') as HTMLButtonElement | null
+  const updateStatus = document.getElementById('update-status')
+  const updateInstallBtn = document.getElementById('update-install-btn') as HTMLButtonElement | null
+  updateCheckBtn?.addEventListener('click', () => {
+    void native?.checkForUpdates()
+  })
+  updateInstallBtn?.addEventListener('click', () => {
+    native?.installUpdate()
+  })
+
+  /** 根据更新状态刷新设置面板文案与按钮可用性 */
+  const applyUpdateStatus = (status: UpdateStatus) => {
+    if (!updateStatus || !updateCheckBtn || !updateInstallBtn) return
+    switch (status.status) {
+      case 'idle':
+        updateStatus.textContent = ''
+        updateCheckBtn.disabled = false
+        updateInstallBtn.hidden = true
+        break
+      case 'checking':
+        updateStatus.textContent = t('settings.updateChecking')
+        updateCheckBtn.disabled = true
+        updateInstallBtn.hidden = true
+        break
+      case 'available':
+        updateStatus.textContent = t('settings.updateAvailable', { version: status.version })
+        updateCheckBtn.disabled = false
+        updateInstallBtn.hidden = true
+        break
+      case 'not-available':
+        updateStatus.textContent = t('settings.updateNotAvailable')
+        updateCheckBtn.disabled = false
+        updateInstallBtn.hidden = true
+        break
+      case 'downloading':
+        updateStatus.textContent = t('settings.updateDownloading', {
+          percent: Math.round(status.percent),
+        })
+        updateCheckBtn.disabled = true
+        updateInstallBtn.hidden = true
+        break
+      case 'downloaded':
+        updateStatus.textContent = t('settings.updateDownloaded')
+        updateCheckBtn.disabled = true
+        updateInstallBtn.hidden = false
+        break
+      case 'error':
+        updateStatus.textContent = t('settings.updateError', { message: status.message })
+        updateCheckBtn.disabled = false
+        updateInstallBtn.hidden = true
+        break
+    }
+  }
+  native?.onUpdateStatus(applyUpdateStatus)
+
+  // 启动时把"启动时自动检查更新"开关同步给主进程
+  // （主进程据此决定是否在 app 启动后 5 秒自动检查）
+  native?.setAutoCheckUpdate(getAutoCheckUpdate())
 }

@@ -1,0 +1,135 @@
+# 发布工作流：push tag (v*) 触发，双平台打包并发布。
+# - macOS arm64 + Windows x64
+# - 产物上传到 GitHub Release（electron-builder --publish always）
+# - 元数据 (latest*.yml) 推到 Gitee 仓库 releases/ 目录（供 generic provider raw URL 读取）
+# - 大文件 (dmg/exe/blockmap) 上传到 Gitee Release 附件
+# 注意：Gitee 需在仓库 Settings → Secrets 配置 GITEE_TOKEN
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # Job 1：双平台打包 + 上传 GitHub Release
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Build & Package
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build && npx electron-builder --publish always
+      # 上传产物 artifact 供 Gitee job 下载
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: |
+            release/*.yml
+            release/*.dmg
+            release/*.exe
+            release/*.blockmap
+          retention-days: 7
+
+  # Job 2：上传到 Gitee（依赖 build 完成后执行一次）
+  publish-gitee:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # 下载两个平台的产物
+      - uses: actions/download-artifact@v4
+        with:
+          path: release
+          pattern: release-*
+          merge-multiple: true
+      - name: List artifacts
+        run: find release -type f | sort
+      - name: Upload to Gitee
+        env:
+          GITEE_TOKEN: ${{ secrets.GITEE_TOKEN }}
+          GITEE_OWNER: ChiangyangNPU
+          GITEE_REPO: tmd
+        run: |
+          if [ -z "$GITEE_TOKEN" ]; then
+            echo "GITEE_TOKEN not set, skipping Gitee upload"
+            exit 0
+          fi
+
+          TAG=${GITHUB_REF_NAME:-$(node -p "require('./package.json').version")}
+          echo "Publishing to Gitee tag: $TAG"
+
+          # 1. 上传元数据 (latest*.yml) 到仓库 releases/ 目录
+          for yml in release/latest*.yml; do
+            [ -f "$yml" ] || continue
+            name=$(basename "$yml")
+            echo "Uploading $name to Gitee repo releases/"
+            CONTENT=$(base64 -w 0 "$yml")
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+              "https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO/contents/releases/$name" \
+              -F "access_token=$GITEE_TOKEN" \
+              -F "message=chore: update $name for $TAG" \
+              -F "content=$CONTENT" \
+              -F "branch=main")
+            if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
+              echo "Update failed ($HTTP_CODE), trying create..."
+              curl -s -X POST \
+                "https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO/contents" \
+                -F "access_token=$GITEE_TOKEN" \
+                -F "message=chore: add $name for $TAG" \
+                -F "content=$CONTENT" \
+                -F "branch=main" \
+                -F "path=releases/$name"
+            fi
+          done
+
+          # 2. 创建 Gitee Release
+          RELEASE_RESP=$(curl -s -X POST \
+            "https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO/releases" \
+            -F "access_token=$GITEE_TOKEN" \
+            -F "tag_name=$TAG" \
+            -F "name=$TAG" \
+            -F "body=See GitHub Release for details" \
+            -F "target_commitish=main")
+          RELEASE_ID=$(echo "$RELEASE_RESP" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{console.log(JSON.parse(d).id||'')}catch{console.log('')}})")
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Failed to create Gitee Release, response: $RELEASE_RESP"
+            exit 1
+          fi
+          echo "Created Gitee Release ID: $RELEASE_ID"
+
+          # 3. 上传大文件到 Release 附件
+          for f in release/*.dmg release/*.exe release/*.blockmap; do
+            [ -f "$f" ] || continue
+            name=$(basename "$f")
+            echo "Uploading $name to Gitee Release"
+            curl -s -X POST \
+              "https://gitee.com/api/v5/repos/$GITEE_OWNER/$GITEE_REPO/releases/$RELEASE_ID/attach_files" \
+              -F "access_token=$GITEE_TOKEN" \
+              -F "file=@$f" > /dev/null
+          done
+          echo "Gitee upload complete"

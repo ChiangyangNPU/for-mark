@@ -18,6 +18,25 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, session } = require('electron
 const path = require('node:path')
 const fs = require('node:fs/promises')
 const IPC = require('./ipc.cjs')
+// 自动更新：electron-updater。开发模式（app.isPackaged === false）下
+// checkForUpdates 会因找不到 latest.yml 报错，统一由 error 事件处理。
+const { autoUpdater } = require('electron-updater')
+
+// 双更新源：Gitee（国内默认）+ GitHub（国外备用）。Gitee 失败时自动切换 GitHub 重试一次。
+// 注意：Gitee raw 有 CDN 缓存（约 5 分钟）。不在此处用查询参数 ?t=xxx 绕过——
+// electron-updater 的 generic provider 会把 url 与 latest.yml 拼接，
+// 加查询参数会变成 .../releases/?t=xxx/latest.yml 导致 404，故直接接受缓存延迟。
+/** @type {import('builder-util-runtime').GenericServerOptions} */
+const GITEE_SOURCE = {
+  provider: 'generic',
+  url: 'https://gitee.com/chiangyangNPU/tmd/raw/main/releases/',
+}
+/** @type {import('builder-util-runtime').GithubOptions} */
+const GITHUB_SOURCE = {
+  provider: 'github',
+  owner: 'ChiangyangNPU',
+  repo: 'tmd',
+}
 
 const DEV_SERVER_URL = process.env.ELECTRON_RENDERER_URL
 
@@ -27,6 +46,14 @@ let mainWindow = null
 let autosaveMenuItem = null
 let rendererDirty = false
 let autosaveEnabled = false
+
+// ---------- 自动更新状态 ----------
+/** @type {'gitee' | 'github'} */
+let currentUpdateSource = 'gitee'
+/** 启动时是否自动检查更新（由渲染层经 updateAutoCheck IPC 同步，默认 false） */
+let autoCheckUpdateEnabled = false
+/** 是否已因出错切换过源（避免 error 事件中无限切换重试） */
+let updateSourceSwitched = false
 
 // 菜单文案：默认中文，渲染层启动后把当前语言的文案经 IPC 发来并重建菜单
 /** @type {Record<string, string>} */
@@ -246,6 +273,119 @@ function createWindow() {
   })
 }
 
+// ---------- 自动更新 ----------
+
+/**
+ * 设置当前更新源并重置切换标记。
+ * @param {'gitee' | 'github'} source
+ */
+function setUpdateSource(source) {
+  currentUpdateSource = source
+  autoUpdater.setFeedURL(source === 'gitee' ? GITEE_SOURCE : GITHUB_SOURCE)
+  // 切换源后允许出错时再切换到另一个源
+  updateSourceSwitched = false
+}
+
+/**
+ * 装配自动更新：监听 electron-updater 事件，经 IPC 推送状态给渲染层。
+ * 发现新版本后用原生 dialog 询问用户，不静默下载。
+ * macOS 自用场景为未签名构建（package.json 的 dist 脚本已设
+ * CSC_IDENTITY_AUTO_DISCOVERY=false），此处不强制签名校验。
+ */
+
+function setupAutoUpdater() {
+  // 不自动下载：发现新版本后弹窗问用户
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = true
+  // 初始源：Gitee（国内）
+  setUpdateSource('gitee')
+
+  autoUpdater.on('checking-for-update', () => {
+    sendToRenderer(IPC.updateStatus, { status: 'checking' })
+  })
+
+  autoUpdater.on('update-available', (info) => {
+    sendToRenderer(IPC.updateStatus, {
+      status: 'available',
+      version: info.version,
+    })
+    dialog
+      .showMessageBox(dialogParent(), {
+        type: 'info',
+        title: 'TMD',
+        message: `发现新版本 ${info.version}`,
+        detail: '是否立即下载更新？',
+        buttons: ['下载更新', '稍后'],
+        defaultId: 0,
+        cancelId: 1,
+      })
+      .then(({ response }) => {
+        if (response === 0) {
+          autoUpdater.downloadUpdate().catch((err) => {
+            sendToRenderer(IPC.updateStatus, {
+              status: 'error',
+              message: err instanceof Error ? err.message : String(err),
+            })
+          })
+        } else {
+          sendToRenderer(IPC.updateStatus, { status: 'idle' })
+        }
+      })
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    sendToRenderer(IPC.updateStatus, { status: 'not-available' })
+    dialog.showMessageBox(dialogParent(), {
+      type: 'info',
+      title: 'TMD',
+      message: '当前已是最新版本',
+      buttons: ['确定'],
+    })
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    sendToRenderer(IPC.updateStatus, {
+      status: 'downloading',
+      percent: progress.percent,
+    })
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    sendToRenderer(IPC.updateStatus, { status: 'downloaded' })
+    dialog
+      .showMessageBox(dialogParent(), {
+        type: 'info',
+        title: 'TMD',
+        message: '下载完成，重启以安装',
+        detail: '应用将关闭并安装更新后重新启动。',
+        buttons: ['立即重启', '稍后'],
+        defaultId: 0,
+        cancelId: 1,
+      })
+      .then(({ response }) => {
+        if (response === 0) autoUpdater.quitAndInstall()
+      })
+  })
+
+  autoUpdater.on('error', (err) => {
+    // 当前源为 Gitee 且尚未因出错切换过：切换到 GitHub 重试一次
+    if (currentUpdateSource === 'gitee' && !updateSourceSwitched) {
+      updateSourceSwitched = true
+      currentUpdateSource = 'github'
+      autoUpdater.setFeedURL(GITHUB_SOURCE)
+      autoUpdater.checkForUpdates().catch(() => {
+        // 切换后仍失败：error 事件会再次触发，此时 currentUpdateSource === 'github'
+        // 落到下面的 error 状态推送
+      })
+      return
+    }
+    sendToRenderer(IPC.updateStatus, {
+      status: 'error',
+      message: err instanceof Error ? err.message : String(err),
+    })
+  })
+}
+
 // ---------- IPC：文件与目录 ----------
 
 /** @type {import('electron').FileFilter[]} */
@@ -385,6 +525,44 @@ ipcMain.on(IPC.setLocaleInfo, (_event, labels) => {
   }
 })
 
+// ---------- IPC：更新 ----------
+
+// 手动检查更新：重置源为 Gitee
+ipcMain.handle(IPC.updateCheck, async () => {
+  setUpdateSource('gitee')
+  try {
+    await autoUpdater.checkForUpdates()
+  } catch (err) {
+    sendToRenderer(IPC.updateStatus, {
+      status: 'error',
+      message: err instanceof Error ? err.message : String(err),
+    })
+  }
+})
+
+// 用户同意下载
+ipcMain.handle(IPC.updateDownload, async () => {
+  try {
+    await autoUpdater.downloadUpdate()
+  } catch (err) {
+    sendToRenderer(IPC.updateStatus, {
+      status: 'error',
+      message: err instanceof Error ? err.message : String(err),
+    })
+  }
+})
+
+// 安装已下载的更新
+ipcMain.handle(IPC.updateInstall, () => {
+  autoUpdater.quitAndInstall()
+})
+
+// 渲染层同步"启动时自动检查更新"开关
+/** @param {unknown} _event @param {unknown} enabled */
+ipcMain.on(IPC.updateAutoCheck, (_event, enabled) => {
+  autoCheckUpdateEnabled = !!enabled
+})
+
 // ---------- 生命周期 ----------
 
 // 单实例：再次双击 .md / 启动应用时，把文件转交给已运行的实例
@@ -411,10 +589,27 @@ app.on('open-file', (event, filePath) => {
 app.whenReady().then(() => {
   buildMenu()
   createWindow()
+  // 装配自动更新事件监听（autoCheckUpdateEnabled 由渲染层经 IPC 同步）
+  setupAutoUpdater()
 
   // Windows：文件路径在启动参数里
   const argvFile = process.argv.slice(1).find((arg) => /\.(md|markdown)$/i.test(arg))
   if (argvFile) queueOpenPath(argvFile)
+
+  // 启动后 5 秒自动检查更新：仅当渲染层已同步开关为 true。
+  // 渲染层 boot 时（wireSettings 内）会把 localStorage 的开关值发给主进程，
+  // 该 IPC 通常在数毫秒内到达，远早于 5 秒延时。
+  setTimeout(() => {
+    if (autoCheckUpdateEnabled) {
+      setUpdateSource('gitee')
+      autoUpdater.checkForUpdates().catch((err) => {
+        sendToRenderer(IPC.updateStatus, {
+          status: 'error',
+          message: err instanceof Error ? err.message : String(err),
+        })
+      })
+    }
+  }, 5000)
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

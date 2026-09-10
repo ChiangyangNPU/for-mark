@@ -126,6 +126,31 @@
             选择 assets 模式时，未保存过的文档会自动降级为内联模式
           </div>
         </div>
+
+        <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.update">更新</div>
+          <label class="settings-option">
+            <input type="checkbox" id="set-auto-check-update" />
+            <span data-i18n="settings.updateAutoCheck">启动时自动检查更新</span>
+          </label>
+          <div class="settings-hint" data-i18n="settings.updateAutoCheckHint">
+            启动应用后自动检查新版本
+          </div>
+          <div class="settings-update-row">
+            <button id="update-check-btn" class="update-check-btn" data-i18n="settings.updateCheck">
+              检查更新
+            </button>
+            <span id="update-status" class="update-status"></span>
+          </div>
+          <button
+            id="update-install-btn"
+            class="update-install-btn"
+            data-i18n="settings.updateInstall"
+            hidden
+          >
+            立即重启
+          </button>
+        </div>
       </div>
     </div>
 

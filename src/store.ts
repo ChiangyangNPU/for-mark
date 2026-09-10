@@ -13,6 +13,7 @@ export const RECENT_KEY = 'tmd:recent'
 export const IMAGE_STRATEGY_KEY = 'tmd:img'
 export const AUTOSAVE_KEY = 'tmd:autosave'
 export const LOCALE_KEY = 'tmd:lang'
+export const AUTO_CHECK_UPDATE_KEY = 'tmd:auto-check-update'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {
@@ -72,4 +73,13 @@ export function getAutosaveEnabled(): boolean {
 
 export function setAutosaveEnabled(enabled: boolean) {
   localStorage.setItem(AUTOSAVE_KEY, enabled ? 'true' : 'false')
+}
+
+/** 启动时是否自动检查更新（默认关闭） */
+export function getAutoCheckUpdate(): boolean {
+  return localStorage.getItem(AUTO_CHECK_UPDATE_KEY) === 'true'
+}
+
+export function setAutoCheckUpdate(enabled: boolean) {
+  localStorage.setItem(AUTO_CHECK_UPDATE_KEY, enabled ? 'true' : 'false')
 }
