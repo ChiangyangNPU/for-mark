@@ -75,4 +75,12 @@ export default [
       'no-console': 'off',
     },
   },
+
+  // public：首帧引导脚本，浏览器环境（先于模块 JS 执行）
+  {
+    files: ['public/**/*.js'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
 ]
