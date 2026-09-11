@@ -8,10 +8,52 @@
     <script src="./boot.js"></script>
   </head>
   <body>
-    <!-- 自绘标题栏（Windows/Linux）：拖拽移动窗口 + 居中文件名 + 右缘窗口控制按钮。
-         Mac 走 hiddenInset（红绿灯浮在工具栏上），此行经 CSS 隐藏 -->
-    <header class="titlebar">
-      <span id="titlebar-title" class="titlebar-title"></span>
+    <!-- 单行顶栏（Mac/Windows 同构）：
+         Mac 走 hiddenInset（红绿灯浮在左侧），功能按钮组靠右；
+         Windows/Linux 走 hidden（自绘窗口按钮独占右缘），功能按钮组靠左且顺序反转；
+         整行是拖拽区，文件名绝对居中 -->
+    <header class="toolbar">
+      <span id="win-title" class="win-title"></span>
+      <div class="toolbar-left">
+        <span id="word-count" class="word-count">0 字</span>
+        <button
+          id="sidebar-outline-btn"
+          class="tool-btn"
+          data-i18n="toolbar.outline"
+          data-i18n-title="toolbar.outlineTitle"
+        >
+          大纲
+        </button>
+        <button
+          id="source-mode-btn"
+          class="tool-btn"
+          data-i18n="toolbar.sourceMode"
+          data-i18n-title="toolbar.sourceModeTitle"
+        >
+          源码
+        </button>
+        <button
+          id="import-btn"
+          class="tool-btn"
+          data-i18n="toolbar.open"
+          data-i18n-title="toolbar.openTitle"
+        >
+          打开
+        </button>
+        <button
+          id="export-btn"
+          class="tool-btn"
+          data-i18n="toolbar.save"
+          data-i18n-title="toolbar.saveTitle"
+        >
+          保存
+        </button>
+        <button id="more-btn" class="tool-btn" data-i18n-title="toolbar.more">⋯</button>
+        <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">
+          🌙
+        </button>
+      </div>
+      <!-- Windows/Linux 自绘窗口控制：极简透明按钮（hover 高亮，关闭 hover 红） -->
       <div class="win-controls" aria-label="窗口控制">
         <button id="win-min" class="win-btn" tabindex="-1" aria-label="最小化">
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
@@ -33,46 +75,6 @@
           </svg>
         </button>
       </div>
-    </header>
-    <header class="toolbar">
-      <span id="win-title" class="win-title"></span>
-      <span id="word-count" class="word-count">0 字</span>
-      <button
-        id="sidebar-outline-btn"
-        class="tool-btn"
-        data-i18n="toolbar.outline"
-        data-i18n-title="toolbar.outlineTitle"
-      >
-        大纲
-      </button>
-      <button
-        id="source-mode-btn"
-        class="tool-btn"
-        data-i18n="toolbar.sourceMode"
-        data-i18n-title="toolbar.sourceModeTitle"
-      >
-        源码
-      </button>
-      <button
-        id="import-btn"
-        class="tool-btn"
-        data-i18n="toolbar.open"
-        data-i18n-title="toolbar.openTitle"
-      >
-        打开
-      </button>
-      <button
-        id="export-btn"
-        class="tool-btn"
-        data-i18n="toolbar.save"
-        data-i18n-title="toolbar.saveTitle"
-      >
-        保存
-      </button>
-      <button id="more-btn" class="tool-btn" data-i18n-title="toolbar.more">⋯</button>
-      <button id="theme-toggle" class="theme-toggle" data-i18n-title="toolbar.themeTitle">
-        🌙
-      </button>
     </header>
 
     <div id="more-menu" class="more-menu" hidden>

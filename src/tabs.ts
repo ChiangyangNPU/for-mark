@@ -83,16 +83,14 @@ function dirName(p: string): string {
   return i > 0 ? p.slice(0, i) : p
 }
 
-/** 同步窗口标题（标题栏/工具栏居中文件名 + 未保存圆点标记）并更新图片显示目录 */
+/** 同步窗口标题（工具栏居中文件名 + 未保存圆点标记）并更新图片显示目录 */
 export function updateTitle() {
   const tab = activeTab()
   const text = `${tab?.dirty ? '• ' : ''}${tab?.name ?? t('tab.untitled')}`
   document.title = text
-  // win：自绘标题栏居中文件名；mac：工具栏居中文件名（两处按平台只显其一）
+  // 两平台共用：工具栏居中文件名（Mac 红绿灯浮左侧，Win 窗口按钮在右缘）
   const el = document.getElementById('win-title')
   if (el) el.textContent = text
-  const titlebarTitle = document.getElementById('titlebar-title')
-  if (titlebarTitle) titlebarTitle.textContent = text
   // 相对路径图片的显示解析目录跟随当前文档位置
   setImageBaseDir(getActiveBaseDir())
 }

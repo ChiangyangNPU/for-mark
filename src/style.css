@@ -78,55 +78,20 @@ body {
   -webkit-app-region: no-drag;
 }
 
-/* ---------------- 自绘标题栏（Windows/Linux） ----------------
-   独立一行：拖拽移动窗口 + 居中文件名 + 右缘窗口控制按钮。
-   titleBarStyle: 'hidden' 后标题区属于页面，主题切换与内容区同帧同步；
-   public/boot.js 在首帧前挂 html.win 类，Mac 上本区块整体不显示
-   （Mac 走 hiddenInset，红绿灯浮在工具栏左侧） */
-.titlebar {
-  display: none;
-}
-
-html.win .titlebar {
-  position: sticky;
-  top: 0;
-  z-index: 11;
+/* 功能按钮组容器（字数 + 功能按钮）：内部间距与拖拽行为集中管理 */
+.toolbar-left {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  height: 32px;
-  background: var(--bg);
+  gap: 12px;
+  /* 组内空白处可作为拖拽区，按钮已各自 no-drag */
   -webkit-app-region: drag;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
-.titlebar-title {
-  /* 绝对定位于标题栏正中：不受右侧按钮数量影响，始终居中 */
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 40%;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--fg);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-}
-
-/* Windows 下工具栏吸附在标题栏下方 */
-html.win .toolbar {
-  top: 32px;
-}
-
-/* Windows 的文件名在标题栏展示，工具栏里的同名元素隐藏（Mac 保留） */
-html.win .toolbar .win-title {
-  display: none;
-}
-
+/* ---------------- 自绘窗口控制（Windows/Linux） ----------------
+   单行顶栏：窗口按钮以极简透明样式并入工具栏右缘（细竖线分隔），
+   Mac 上本区块不显示（Mac 走 hiddenInset，红绿灯浮在工具栏左侧）。
+   titleBarStyle: 'hidden' 后标题区属于页面，主题切换与内容区同帧同步；
+   public/boot.js 在首帧前挂 html.win 类 */
 .win-controls {
   display: none;
 }
@@ -138,7 +103,7 @@ html.win .win-controls {
 }
 
 .win-btn {
-  /* 标题栏整体是拖拽区，按钮必须显式退出拖拽，否则点击被拖拽行为吞掉 */
+  /* 标题栏整行是拖拽区，按钮必须显式退出拖拽，否则点击被拖拽行为吞掉 */
   -webkit-app-region: no-drag;
   display: flex;
   align-items: center;
@@ -352,9 +317,35 @@ html.win .win-controls {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
-/* Mac 隐藏标题栏：红绿灯按钮浮在工具栏左侧，让出空间 */
+/* Mac 隐藏标题栏：红绿灯按钮浮在工具栏左侧，功能按钮组让位靠右 */
 html.mac .toolbar {
   padding-left: 80px;
+}
+
+html.mac .toolbar-left {
+  margin-left: auto;
+}
+
+/* Windows：功能按钮组靠左且视觉顺序反转（主题 ⋯ 保存 打开 源码 大纲 字数），
+   自绘窗口按钮独占右缘，与 Mac 左右镜像；中段空白为拖拽区 */
+html.win .toolbar {
+  padding-left: 12px;
+  padding-right: 0;
+}
+
+html.win .toolbar-left {
+  flex-direction: row-reverse;
+  margin-right: auto;
+}
+
+/* Windows：⋯ 溢出菜单贴左缘弹出（与功能按钮组对齐） */
+html.win .more-menu {
+  right: auto;
+  left: 12px;
+}
+
+html.win .win-controls {
+  margin-left: auto;
 }
 
 .win-title {
@@ -371,6 +362,13 @@ html.mac .toolbar {
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+}
+
+/* 窗口过窄时隐藏居中文件名，避免与两侧控件重叠（Typora 同策略） */
+@media (max-width: 860px) {
+  .win-title {
+    display: none;
+  }
 }
 
 .logo {
@@ -566,13 +564,9 @@ img {
 
 .workbench {
   display: flex;
-  /* 45px = 工具栏 44px + 1px 底边框；Windows/Linux 自绘标题栏额外占 32px */
+  /* 45px = 工具栏 44px + 1px 底边框（两平台顶栏均为单行） */
   height: calc(100vh - 45px);
   overflow: hidden;
-}
-
-html.win .workbench {
-  height: calc(100vh - 77px);
 }
 
 .sidebar {
