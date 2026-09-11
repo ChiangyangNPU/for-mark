@@ -9,6 +9,7 @@ import { TextSelection } from '@milkdown/kit/prose/state'
 import { t } from './i18n'
 import { collectHeadings, scrollEditorPosIntoView } from './toc'
 
+/** 大纲条目：标题级别（1-3）、文本与文档位置 */
 export interface OutlineItem {
   level: number
   text: string
@@ -22,6 +23,7 @@ export function collectOutline(doc: ProseNode): OutlineItem[] {
     .map(({ level, text, pos }) => ({ level, text, pos }))
 }
 
+/** 渲染大纲面板；点击条目选中对应标题并滚动到可视区 */
 export function renderOutline(container: HTMLElement, items: OutlineItem[], view: EditorView) {
   container.textContent = ''
   if (!items.length) {

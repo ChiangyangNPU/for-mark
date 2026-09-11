@@ -30,6 +30,7 @@ function toFileUrl(dir: string, src: string): string {
   return `file://${normalized.startsWith('/') ? '' : '/'}${encodeURI(normalized).replaceAll('#', '%23')}`
 }
 
+/** 图片路径解析插件：显示时把相对路径 src 解析为 file:// 绝对地址（节点装饰，文档数据不变） */
 export const imageSrcResolver = $prose(
   () =>
     new Plugin({

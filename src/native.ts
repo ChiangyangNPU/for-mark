@@ -83,6 +83,7 @@ declare global {
   }
 }
 
+/** 当前环境的壳层 API 引用；浏览器环境下为 undefined（各模块据此降级） */
 export const native = window.tmdAPI
 
 /**

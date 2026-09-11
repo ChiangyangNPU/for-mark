@@ -13,6 +13,7 @@ import { native } from './native'
 let enabled = getAutosaveEnabled()
 let timer: number | undefined
 
+/** 自动保存当前是否开启 */
 export function isAutosaveOn(): boolean {
   return enabled
 }
@@ -32,6 +33,7 @@ export function initAutosave() {
   if (enabled) startAutosave()
 }
 
+/** 启动 5 秒周期定时器（重复调用会先清掉旧定时器；未开启时直接返回） */
 export function startAutosave() {
   stopAutosave()
   if (!enabled) return
@@ -41,6 +43,7 @@ export function startAutosave() {
   }, 5000)
 }
 
+/** 停止自动保存定时器 */
 export function stopAutosave() {
   window.clearInterval(timer)
 }

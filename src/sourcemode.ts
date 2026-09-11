@@ -7,6 +7,7 @@
 import { EditorView as CMView, basicSetup } from 'codemirror'
 import { markdown as cmMarkdown } from '@codemirror/lang-markdown'
 
+/** 创建 CodeMirror 编辑器实例挂到 parent（markdown 全文进出源码模式各交换一次） */
 export function createSourceEditor(parent: HTMLElement, markdown: string): CMView {
   return new CMView({
     doc: markdown,

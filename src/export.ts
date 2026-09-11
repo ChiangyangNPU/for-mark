@@ -72,6 +72,7 @@ function renderMarkdown(markdown: string): string {
   return mdIt.render(cleaned)
 }
 
+/** 导出 HTML：渲染为内嵌样式、引 Mermaid/KaTeX CDN 的独立页面（Electron 存盘 / 浏览器下载） */
 export async function exportHtml(markdown: string, currentName: string) {
   const html = `<!doctype html>
 <html lang="zh-CN">
@@ -109,6 +110,7 @@ ${renderMarkdown(markdown)}
   }
 }
 
+/** 导出 PDF：经打印对话框完成（Electron 走主进程打印，浏览器走 window.print） */
 export async function exportPdf() {
   if (native) {
     await native.print()

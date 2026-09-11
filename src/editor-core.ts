@@ -42,14 +42,17 @@ interface EditorHooks {
 
 let hooks: EditorHooks = { onMarkdownChange: () => {}, onDocUpdate: () => {} }
 
+/** 注入文档变更钩子（main.ts 装配时调用一次） */
 export function setEditorHooks(next: EditorHooks) {
   hooks = next
 }
 
+/** 取当前 ProseMirror 视图实例（编辑器未挂载时为 null） */
 export function getPmView(): EditorView | null {
   return pmView
 }
 
+/** 当前是否处于源码模式 */
 export function isSourceMode(): boolean {
   return sourceMode
 }
@@ -110,6 +113,7 @@ export async function destroyEditor() {
   pmView = null
 }
 
+/** 重建编辑器时的可选行为（滚动保持/恢复） */
 export interface ReplaceOptions {
   /** 重建前后内容相同（退出源码模式）时保持滚动位置：锁定 #editor 高度防塌陷 */
   preserveScroll?: boolean

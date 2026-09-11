@@ -11,6 +11,7 @@ import { Plugin, TextSelection } from '@milkdown/kit/prose/state'
 import { Decoration, DecorationSet, type EditorView } from '@milkdown/kit/prose/view'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 
+/** 单个匹配项在文档中的位置区间 */
 export interface MatchRange {
   from: number
   to: number
@@ -24,6 +25,7 @@ interface FindState {
 
 let state: FindState = { query: '', matches: [], index: -1 }
 
+/** 在全文中查找 query 的所有出现位置（大小写不敏感；不跨节点，仅匹配单个文本节点内） */
 export function findMatches(doc: ProseNode, query: string): MatchRange[] {
   if (!query) return []
   const results: MatchRange[] = []
@@ -46,6 +48,7 @@ function sync(view: EditorView) {
   view.dispatch(view.state.tr.setMeta('find-update', true))
 }
 
+/** 查找高亮插件：全部匹配项加 find-hit 类，当前项追加 find-current */
 export const findPlugin = $prose(
   () =>
     new Plugin({
@@ -63,6 +66,7 @@ export const findPlugin = $prose(
     }),
 )
 
+/** 设置查找词：重算匹配列表并定位到第一个匹配 */
 export function findSetQuery(view: EditorView, query: string) {
   const matches = findMatches(view.state.doc, query)
   state = { query, matches, index: matches.length ? 0 : -1 }
@@ -70,6 +74,7 @@ export function findSetQuery(view: EditorView, query: string) {
   return state
 }
 
+/** 跳到上/下一个匹配（循环），选中并滚动到目标位置 */
 export function findStep(view: EditorView, delta: 1 | -1): FindState {
   if (!state.matches.length) return state
   state.index = (state.index + delta + state.matches.length) % state.matches.length
@@ -83,6 +88,7 @@ export function findStep(view: EditorView, delta: 1 | -1): FindState {
   return state
 }
 
+/** 替换当前匹配项，随后重算匹配列表 */
 export function findReplaceCurrent(view: EditorView, replacement: string): FindState {
   if (state.index < 0 || !state.matches[state.index]) return state
   const { from, to } = state.matches[state.index]
@@ -90,6 +96,7 @@ export function findReplaceCurrent(view: EditorView, replacement: string): FindS
   return findSetQuery(view, state.query)
 }
 
+/** 替换全部匹配项并重算（内部从后往前替换，避免位置偏移） */
 export function findReplaceAll(view: EditorView, replacement: string): FindState {
   if (!state.matches.length) return state
   const tr = view.state.tr
@@ -101,6 +108,7 @@ export function findReplaceAll(view: EditorView, replacement: string): FindState
   return findSetQuery(view, state.query)
 }
 
+/** 清空查找状态并移除高亮 */
 export function findClear(view: EditorView | null) {
   state = { query: '', matches: [], index: -1 }
   if (view) sync(view)

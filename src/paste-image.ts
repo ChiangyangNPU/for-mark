@@ -45,6 +45,7 @@ const MIME_EXT: Record<string, string> = {
   'image/svg+xml': '.svg',
 }
 
+/** 粘贴图片插件：拦截剪贴板图片，按当前策略（内联 data URL / assets 落盘）插入 */
 export const pasteImage = $prose(
   () =>
     new Plugin({

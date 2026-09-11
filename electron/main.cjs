@@ -313,8 +313,8 @@ function setUpdateSource(source) {
 /**
  * 装配自动更新：监听 electron-updater 事件，经 IPC 推送状态给渲染层。
  * 发现新版本后用原生 dialog 询问用户，不静默下载。
- * macOS 自用场景为未签名构建（package.json 的 dist 脚本已设
- * CSC_IDENTITY_AUTO_DISCOVERY=false），此处不强制签名校验。
+ * macOS 自用场景为未签名构建（package.json 的 build.mac 已设 identity: null），
+ * 此处不强制签名校验。
  */
 
 function setupAutoUpdater() {
@@ -521,8 +521,8 @@ ipcMain.on(IPC.setAutosaveEnabled, (_event, enabled) => {
   if (autosaveMenuItem) autosaveMenuItem.checked = autosaveEnabled
 })
 
-// 渲染层主题同步：nativeTheme.themeSource 驱动 Windows 原生标题栏深浅色
-// （DWM 深色模式，标题文字与按钮颜色随动）；Mac 标题栏已隐藏不受影响。
+// 渲染层主题同步：nativeTheme.themeSource 设置系统深浅色偏好，
+// 渲染层 prefers-color-scheme 随动（两平台标题栏均已自绘/隐藏，随之一起变色）。
 // 同步切换窗口底色（合成层颜色），消除切换瞬间内容区的白底闪烁；
 // 持久化到 shell-state.json，下次启动在窗口创建前恢复。
 // 用 handle + invoke：壳层切换完成后才返回，渲染层随后再翻页面，两者视觉同步
@@ -669,7 +669,7 @@ function saveShellState(patch) {
 
 app.whenReady().then(() => {
   // 窗口创建前恢复上次主题：nativeTheme 与窗口底色在首帧渲染前生效，
-  // Windows 标题栏与渲染层 prefers-color-scheme 启动即为正确外观
+  // 渲染层 prefers-color-scheme 启动即为正确外观（自绘标题栏同帧正确）
   const savedTheme = readShellState().themeSource
   if (savedTheme === 'dark' || savedTheme === 'light') {
     shellThemeSource = savedTheme

@@ -18,6 +18,7 @@ const HIT_WIDTH = 26
 /** 复选框纵向热区高度（仅首行方框附近可点，多行续行左侧不触发） */
 const HIT_HEIGHT = 28
 
+/** 复选框点击插件：任务项左侧热区点击切换勾选状态（走事务，可撤销） */
 export const taskListClick = $prose(
   () =>
     new Plugin({

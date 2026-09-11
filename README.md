@@ -6,7 +6,7 @@
 
 跨平台（macOS / Windows）的 Markdown 所见即所得编辑器，交互对标 Typora，核心特性是 Mermaid 图表的实时渲染。
 
-当前进度：**v0.1（网页内核 MVP）已完成；v1.0 阶段的 Electron 壳 + 本地文件读写已完成**，桌面应用可用 `npm run dev:electron` 启动。需求范围见 [docs/需求说明.md](docs/需求说明.md)。
+需求范围见 [docs/需求说明.md](docs/需求说明.md)，架构与模块职责见 [docs/架构设计.md](docs/架构设计.md)，打包发布见 [docs/打包发布.md](docs/打包发布.md)。
 
 ## 快速开始
 
@@ -22,38 +22,57 @@ npm run dist           # 打包安装包（mac: dmg / win: nsis）
 > Electron 二进制首次下载失败（GitHub 直连问题）时，改用镜像：
 > `ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/" node node_modules/electron/install.js`
 
-## 已实现（v0.1 + 桌面壳）
+## 功能特性
 
 - 所见即所得编辑（Milkdown / ProseMirror 内核 + GFM：表格、任务列表、删除线）
 - **Mermaid 实时渲染**（`src/mermaid.ts`，自研插件）：
   - 输入 ` ```mermaid ` 回车即创建图表块
   - 光标在块外：渲染 SVG；点击图表：进入源码编辑；光标离开：重新渲染
-  - 输入防抖 400ms；语法错误时保留上一次成功的图并显示错误提示
+  - 输入防抖 400ms；语法错误时清空旧图并显示错误提示（与 Typora/Obsidian 一致）
   - 过期渲染请求丢弃（序号守卫），连续快速输入不闪旧图
+- 数学公式（KaTeX：`$...$` 行内 / `$$...$$` 块级实时渲染）
 - 代码块语法高亮（`@milkdown/plugin-prism` + refractor，光标进入即编辑源码，与 Typora 一致）
-- 图片：`![]()` 渲染、粘贴图片自动插入（data URL，>5MB 忽略）
-- 深色/浅色主题切换（Mermaid 图表随主题重渲染），偏好与文档自动保存到 localStorage
-- 字数统计、撤销/重做
+- 多标签页：同路径去重、未保存标记 `•`、每标签滚动位置记忆
+- 源码模式（CodeMirror 6 整篇编辑，自带搜索面板）
+- 查找替换（所见即所得模式下装饰器高亮，支持单个/全部替换）
+- 大纲面板（1-3 级标题点击跳转）与目录块（TOC，GitHub 风格锚点）
+- 文件树（打开文件夹）与最近打开列表
+- 粘贴图片双策略：内联 data URL / 文档同目录 `assets/` 落盘（落盘失败自动降级内联，>5MB 忽略）
+- 相对路径图片按文档所在目录解析显示（文档数据保持相对路径）
+- 导出：HTML（独立文件，Mermaid/KaTeX 走 CDN）、PDF（经系统打印对话框）
+- 自动保存（5 秒周期写回，设置面板与菜单共用开关）
+- 深色/浅色主题切换（图表原地重渲，不重建编辑器，保住撤销历史/焦点/滚动位置）
+- 多语言界面（简体中文 / English，跟随系统，设置面板可切换）
+- 自动更新（Gitee / GitHub 双源，发现新版本弹窗询问，不静默下载）
 - **Electron 桌面壳**（`electron/`）：
+  - 自绘标题栏：Windows/Linux 单行工具栏 + `─ □ ✕` 窗口控制，Mac 红绿灯沉浸式；深浅色切换同帧变色
   - 原生打开/保存/另存为对话框，文件菜单快捷键 Cmd/Ctrl+O / S / Shift+S
-  - 标题栏显示文件名与未保存标记（`•`）
+  - 文件关联（双击 .md 直接打开）+ 单实例锁（已运行时转交现有窗口）
+  - 崩溃恢复（文档内容每次变更即写 localStorage 恢复副本）
   - 渲染层保持纯网页逻辑，Node 能力经 preload 受控暴露（contextIsolation）
-  - 浏览器模式自动降级：导入用 `<input type=file>`，保存为下载
+  - 浏览器模式自动降级：文件选择用 `<input type=file>`，保存为下载
 
 ## 技术栈
 
-Electron + TypeScript + Vite + Milkdown + Mermaid + refractor。
+Electron + TypeScript + Vite + Milkdown（ProseMirror） + Mermaid + CodeMirror 6 + KaTeX + refractor。
 
 ## 目录结构
 
 ```
 index.html            页面入口
-electron/main.cjs     Electron 主进程（窗口、菜单、IPC 文件读写）
+public/boot.js        首帧引导脚本（主题/平台类，防启动白闪）
+electron/main.cjs     Electron 主进程（窗口、菜单、IPC 文件读写、自动更新）
+electron/ipc.cjs      IPC 通道名常量（主进程与 preload 共用）
 electron/preload.cjs  受控 API 暴露（contextBridge）
-src/main.ts           应用启动、文件读写编排、主题切换
+src/main.ts           应用启动与全局装配（boot / hooks 注入 / 快捷键 / 菜单回调）
+src/editor-core.ts    编辑器枢纽（创建/重建/源码模式/内容取回）
+src/tabs.ts           多标签页状态机
 src/mermaid.ts        Mermaid 实时渲染插件（核心）
-src/paste-image.ts    粘贴图片插件
+src/find.ts           查找替换（装饰器实现）
+src/toc.ts            目录（TOC）块
+src/paste-image.ts    粘贴图片插件（inline / assets 双策略）
 src/style.css         全部样式（CSS 变量实现深浅主题 + 高亮配色）
-docs/需求说明.md       版本范围与需求清单
-docs/git-multi-remote.md  Gitee/GitHub 双远程同步指南
+docs/                 需求说明 / 架构设计 / 详细设计 / 打包发布等文档
 ```
+
+> 完整模块清单与职责见 [docs/架构设计.md](docs/架构设计.md)。

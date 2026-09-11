@@ -30,10 +30,12 @@ export function clearDoc() {
   localStorage.removeItem(DOC_KEY)
 }
 
+/** 读取主题偏好（'dark' | 'light'，默认浅色） */
 export function getTheme(): 'dark' | 'light' {
   return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
 }
 
+/** 持久化主题偏好（isDark 为 true 存 'dark'） */
 export function setTheme(isDark: boolean) {
   localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light')
 }
@@ -59,18 +61,22 @@ export function pushRecent(path: string, name: string) {
   localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)))
 }
 
+/** 读取图片粘贴策略（'inline' data URL | 'assets' 落盘，默认 inline） */
 export function getImageStrategy(): ImageStrategy {
   return localStorage.getItem(IMAGE_STRATEGY_KEY) === 'assets' ? 'assets' : 'inline'
 }
 
+/** 持久化图片粘贴策略 */
 export function setImageStrategy(strategy: ImageStrategy) {
   localStorage.setItem(IMAGE_STRATEGY_KEY, strategy)
 }
 
+/** 自动保存开关是否开启（默认关闭） */
 export function getAutosaveEnabled(): boolean {
   return localStorage.getItem(AUTOSAVE_KEY) === 'true'
 }
 
+/** 持久化自动保存开关 */
 export function setAutosaveEnabled(enabled: boolean) {
   localStorage.setItem(AUTOSAVE_KEY, enabled ? 'true' : 'false')
 }
@@ -80,6 +86,7 @@ export function getAutoCheckUpdate(): boolean {
   return localStorage.getItem(AUTO_CHECK_UPDATE_KEY) === 'true'
 }
 
+/** 持久化"启动时自动检查更新"开关 */
 export function setAutoCheckUpdate(enabled: boolean) {
   localStorage.setItem(AUTO_CHECK_UPDATE_KEY, enabled ? 'true' : 'false')
 }

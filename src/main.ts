@@ -87,6 +87,7 @@ function toggleSidebar(which: 'outline' | 'files') {
 // 启动与全局装配
 // ---------------------------------------------------------------------------
 
+/** 启动装配：i18n、平台类、主题恢复、编辑器挂载、工具栏/标签栏/快捷键/菜单事件绑定 */
 async function boot() {
   try {
     applyDomTexts()

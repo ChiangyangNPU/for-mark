@@ -17,6 +17,7 @@ const messages: Record<string, unknown> = {
   en,
 }
 
+/** 语言检测：localStorage 优先；zh 系（含繁中，暂回退简中包）取 zh-CN，其余 en */
 function detectLocale(): string {
   const stored = localStorage.getItem(LOCALE_KEY)
   if (stored && messages[stored]) return stored
@@ -28,10 +29,12 @@ function detectLocale(): string {
 
 let currentLocale = detectLocale()
 
+/** 获取当前语言码（'zh-CN' | 'en'） */
 export function getLocale(): string {
   return currentLocale
 }
 
+/** 切换并持久化语言；未注册的语言名直接忽略 */
 export function setLocale(locale: string) {
   if (!messages[locale]) return
   currentLocale = locale

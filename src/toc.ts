@@ -130,6 +130,7 @@ const tocSchema = $nodeSchema('toc', () => ({
 // 3. 锚点与标题收集（导出 HTML 与 markdown 填充共用，保证锚点一致）
 // ---------------------------------------------------------------------------
 
+/** 标题条目：级别、文本、文档位置与 GitHub 风格锚点 */
 export interface TocHeading {
   level: number
   text: string

@@ -5,17 +5,20 @@
  */
 import { t } from './i18n'
 
+/** 文件树节点：目录含 children，文件无 */
 export interface FileEntry {
   name: string
   path: string
   children?: FileEntry[]
 }
 
+/** 最近打开文件条目 */
 export interface RecentEntry {
   name: string
   path: string
 }
 
+/** 递归渲染目录树：目录行点击展开/收起，文件行点击触发 onOpen 回调 */
 export function renderFileTree(
   container: HTMLElement,
   entries: FileEntry[],
@@ -43,6 +46,7 @@ export function renderFileTree(
   }
 }
 
+/** 渲染最近打开文件列表；列表为空时显示占位文案 */
 export function renderRecent(
   container: HTMLElement,
   recent: RecentEntry[],

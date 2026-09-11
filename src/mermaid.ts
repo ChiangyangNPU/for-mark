@@ -26,7 +26,7 @@ import mermaid from 'mermaid'
 
 mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' })
 
-/** 主题切换时调用；已有图表块通过重建编辑器完成重渲染 */
+/** 初始化 mermaid 主题；已渲染图表的重渲由 reThemeMermaid 原地完成 */
 export function setMermaidTheme(theme: 'default' | 'dark') {
   mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme })
 }

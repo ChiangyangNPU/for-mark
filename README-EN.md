@@ -6,7 +6,7 @@
 
 A cross-platform (macOS / Windows) WYSIWYG Markdown editor with Typora-like interactions. Its core feature is real-time rendering of Mermaid diagrams.
 
-Current progress: **v0.1 (web-core MVP) is complete; the v1.0-stage Electron shell with local file read/write is complete**. The desktop app can be launched with `npm run dev:electron`. For the scope of requirements, see [docs/需求说明.md](docs/需求说明.md).
+For the scope of requirements, see [docs/需求说明.md](docs/需求说明.md) (Chinese). For architecture and module responsibilities, see [docs/架构设计.md](docs/架构设计.md) (Chinese). For packaging and release, see [docs/打包发布.md](docs/打包发布.md) (Chinese).
 
 ## Quick Start
 
@@ -22,38 +22,57 @@ npm run dist           # Build installer (mac: dmg / win: nsis)
 > If the Electron binary fails to download on first install (direct GitHub connection issues), use a mirror instead:
 > `ELECTRON_MIRROR="https://npmmirror.com/mirrors/electron/" node node_modules/electron/install.js`
 
-## Implemented (v0.1 + desktop shell)
+## Features
 
 - WYSIWYG editing (Milkdown / ProseMirror core + GFM: tables, task lists, strikethrough)
 - **Real-time Mermaid rendering** (`src/mermaid.ts`, custom plugin):
   - Type ` ```mermaid ` and press Enter to create a diagram block
   - Cursor outside the block: renders SVG; click the diagram: enters source editing; cursor leaves: re-renders
-  - 400ms input debounce; on syntax errors, the last successful diagram is kept and an error hint is displayed
+  - 400ms input debounce; on syntax errors the stale diagram is cleared and an error hint is shown (consistent with Typora/Obsidian)
   - Stale render requests are discarded (sequence guard), so fast continuous typing never flashes old diagrams
+- Math formulas (KaTeX: `$...$` inline / `$$...$$` block, rendered in real time)
 - Code block syntax highlighting (`@milkdown/plugin-prism` + refractor; entering the block edits the source code, consistent with Typora)
-- Images: `![]()` rendering; pasted images are auto-inserted (data URL; images >5MB are ignored)
-- Dark/light theme switching (Mermaid diagrams re-render with the theme); preferences and documents are auto-saved to localStorage
-- Word count, undo/redo
+- Multi-tab: same-path dedup, unsaved marker (`•`), per-tab scroll position memory
+- Source mode (CodeMirror 6 full-document editing with built-in search panel)
+- Find & replace (decorator-based highlighting in WYSIWYG mode, replace current / replace all)
+- Outline panel (headings level 1-3, click to jump) and TOC block (GitHub-style anchors)
+- File tree (open folder) and recent files list
+- Dual paste-image strategy: inline data URL / save to `assets/` next to the document (falls back to inline on failure; images >5MB ignored)
+- Relative-path images resolved against the document directory for display (document data keeps relative paths)
+- Export: HTML (standalone file, Mermaid/KaTeX via CDN) and PDF (via the system print dialog)
+- Autosave (writes back every 5 seconds; one shared switch for the settings panel and the menu)
+- Dark/light theme switching (diagrams re-rendered in place — the editor is never rebuilt, preserving undo history / focus / scroll position)
+- Multilingual UI (Simplified Chinese / English, follows the system, switchable in the settings panel)
+- Auto-update (dual Gitee / GitHub feeds; a dialog asks before downloading, never silent)
 - **Electron desktop shell** (`electron/`):
+  - Custom-drawn title bar: single-row toolbar with `─ □ ✕` window controls on Windows/Linux, immersive traffic lights on macOS; theme switches change frame synchronously
   - Native open / save / save-as dialogs; File menu shortcuts Cmd/Ctrl+O / S / Shift+S
-  - Title bar shows the file name and an unsaved marker (`•`)
+  - File association (double-click a .md file to open) + single-instance lock (running instance receives the file)
+  - Crash recovery (every content change is written to a localStorage recovery copy)
   - The renderer keeps pure web logic; Node capabilities are exposed in a controlled way via preload (contextIsolation)
-  - Automatic degradation in browser mode: import uses `<input type=file>`, saving becomes a download
+  - Automatic degradation in browser mode: file picking uses `<input type=file>`, saving becomes a download
 
 ## Tech Stack
 
-Electron + TypeScript + Vite + Milkdown + Mermaid + refractor.
+Electron + TypeScript + Vite + Milkdown (ProseMirror) + Mermaid + CodeMirror 6 + KaTeX + refractor.
 
 ## Directory Structure
 
 ```
 index.html                Page entry
-electron/main.cjs         Electron main process (window, menu, IPC file read/write)
+public/boot.js            First-frame bootstrap script (theme/platform classes, prevents white flash)
+electron/main.cjs         Electron main process (window, menu, IPC file read/write, auto-update)
+electron/ipc.cjs          IPC channel name constants (shared by main process and preload)
 electron/preload.cjs      Controlled API exposure (contextBridge)
-src/main.ts               App startup, file read/write orchestration, theme switching
+src/main.ts               App startup & global wiring (boot / hooks injection / shortcuts / menu callbacks)
+src/editor-core.ts        Editor hub (create / rebuild / source mode / content retrieval)
+src/tabs.ts               Multi-tab state machine
 src/mermaid.ts            Mermaid real-time rendering plugin (core)
-src/paste-image.ts        Pasted-image plugin
+src/find.ts               Find & replace (decorator-based)
+src/toc.ts                Table-of-contents (TOC) block
+src/paste-image.ts        Pasted-image plugin (inline / assets dual strategy)
 src/style.css             All styles (CSS variables for dark/light themes + highlight colors)
-docs/需求说明.md           Version scope and requirements checklist
-docs/git-multi-remote.md  Guide for Gitee/GitHub dual-remote sync
+docs/                     Requirements / architecture / detailed design / packaging docs (Chinese)
 ```
+
+> For the full module list and responsibilities, see [docs/架构设计.md](docs/架构设计.md) (Chinese).

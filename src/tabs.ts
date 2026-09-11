@@ -33,6 +33,7 @@ let activeTabId: string | null = null
 /** 标签页自增 id 计数 */
 let tabSeq = 0
 
+/** 页面滚动容器（记录/恢复滚动位置用） */
 function scrollEl(): HTMLElement | null {
   return document.querySelector('.page-scroll')
 }
@@ -42,10 +43,12 @@ export function activeTab(): DocTab | undefined {
   return tabs.find((t) => t.id === activeTabId)
 }
 
+/** 获取当前激活标签页 id */
 export function getActiveTabId(): string | null {
   return activeTabId
 }
 
+/** 设置当前激活标签页 id（不重绘 UI，调用方负责） */
 export function setActiveTabId(id: string | null) {
   activeTabId = id
 }
