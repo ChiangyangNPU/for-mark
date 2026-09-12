@@ -178,6 +178,11 @@ html.win .win-controls {
   background: var(--code-bg);
 }
 
+/* display:flex 会覆盖 hidden 属性的 UA 样式，右键菜单按上下文隐藏单项必须显式关闭 */
+.menu-item[hidden] {
+  display: none;
+}
+
 .menu-item .shortcut {
   color: var(--muted);
   font-size: 11px;

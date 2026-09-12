@@ -19,33 +19,68 @@ import { $prose } from '@milkdown/kit/utils'
 import { keymap } from '@milkdown/kit/prose/keymap'
 import { lift, setBlockType, toggleMark, wrapIn } from '@milkdown/kit/prose/commands'
 import { liftListItem, wrapInList } from '@milkdown/kit/prose/schema-list'
-import type { Command, EditorState } from '@milkdown/kit/prose/state'
+import { TextSelection } from '@milkdown/kit/prose/state'
+import type { Command, EditorState, Transaction } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
 
 // ---------------------------------------------------------------------------
 // 块级切换命令
 // ---------------------------------------------------------------------------
 
-/** 光标所在块是否在指定类型的祖先节点内 */
-function inAncestor(state: EditorState, nodeName: string): boolean {
-  const { $from } = state.selection
-  for (let d = $from.depth; d > 0; d--) {
-    if ($from.node(d).type.name === nodeName) return true
+/** 选区是否触及指定类型的块（祖先链 + 范围扫描双重判断——Cmd+A 全选时
+ *  $from/$to 两端都停在 doc 层 depth 0，祖先链里看不到任何块，必须扫描范围） */
+function inBlock(state: EditorState, nodeName: string): boolean {
+  const { $from, $to, from, to } = state.selection
+  const check = ($pos: import('@milkdown/kit/prose/model').ResolvedPos): boolean => {
+    for (let d = $pos.depth; d > 0; d--) {
+      if ($pos.node(d).type.name === nodeName) return true
+    }
+    return false
   }
-  return false
+  if (check($from) || check($to)) return true
+  let hit = false
+  state.doc.nodesBetween(from, to, (node) => {
+    if (hit) return false
+    if (node.type.name === nodeName) hit = true
+    return !hit
+  })
+  return hit
+}
+
+/**
+ * 块级命令执行兜底：Cmd+A 全选等场景选区端点在 doc 层（depth 0），
+ * lift/liftListItem 的 blockRange 解析不出目标块而直接失败——
+ * 先把选区钳进选区内第一个文本块，再执行命令（同一事务，一次撤销）。
+ */
+function withBlockSelection(
+  state: EditorState,
+  dispatch: ((tr: Transaction) => void) | undefined,
+  cmd: Command,
+): boolean {
+  const { from, to, $from, $to } = state.selection
+  if ($from.depth > 0 || $to.depth > 0) return cmd(state, dispatch)
+  const anchor = TextSelection.near(state.doc.resolve(from), 1)
+  const head = TextSelection.near(state.doc.resolve(to), -1)
+  const inner = TextSelection.between(anchor.$anchor, head.$head)
+  return cmd(state.apply(state.tr.setSelection(inner)), dispatch)
 }
 
 /** 引用切换：在引用内则提升一级退出，否则包进引用 */
 export const toggleBlockquote: Command = (state, dispatch) => {
-  if (inAncestor(state, 'blockquote')) return lift(state, dispatch)
+  if (inBlock(state, 'blockquote')) {
+    return dispatch ? withBlockSelection(state, dispatch, (s, d) => lift(s, d)) : true
+  }
   return wrapIn(state.schema.nodes.blockquote)(state, dispatch)
 }
 
 /** 列表切换：在任何列表内则把当前列表项提升退出，否则包成目标列表 */
 export function toggleList(listName: 'bullet_list' | 'ordered_list'): Command {
   return (state, dispatch) => {
-    if (inAncestor(state, 'bullet_list') || inAncestor(state, 'ordered_list')) {
-      return liftListItem(state.schema.nodes.list_item)(state, dispatch)
+    if (inBlock(state, 'bullet_list') || inBlock(state, 'ordered_list')) {
+      if (!dispatch) return true
+      return withBlockSelection(state, dispatch, (s, d) =>
+        liftListItem(s.schema.nodes.list_item)(s, d),
+      )
     }
     return wrapInList(state.schema.nodes[listName])(state, dispatch)
   }

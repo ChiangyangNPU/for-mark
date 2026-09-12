@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { Schema } from '@milkdown/kit/prose/model'
 import type { Node } from '@milkdown/kit/prose/model'
-import { EditorState } from '@milkdown/kit/prose/state'
+import { EditorState, TextSelection } from '@milkdown/kit/prose/state'
 import type { Transaction } from '@milkdown/kit/prose/state'
 import type { Command } from '@milkdown/kit/prose/state'
 import type { EditorView } from '@milkdown/kit/prose/view'
@@ -60,6 +60,20 @@ describe('块级格式切换命令', () => {
     const second = run(toggleList('bullet_list'), state.apply(first.tr!))
     expect(second.ok).toBe(true)
     expect(second.tr?.doc.firstChild?.type.name).toBe('paragraph')
+  })
+
+  it('Cmd+A 全选（$from 在 doc 层）再按一次仍能退出列表', () => {
+    const wrapped = doc(
+      schema.node('bullet_list', null, [schema.node('list_item', null, [p('item')])]),
+    )
+    // 全选：选区从文档头（depth 0）到文档尾
+    const state = EditorState.create({
+      doc: wrapped,
+      selection: TextSelection.create(wrapped, 0, wrapped.content.size),
+    })
+    const { ok, tr } = run(toggleList('bullet_list'), state)
+    expect(ok).toBe(true)
+    expect(tr?.doc.firstChild?.type.name).toBe('paragraph')
   })
 
   it('fmt-h2 把段落转为二级标题', () => {
