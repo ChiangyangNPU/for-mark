@@ -14,6 +14,8 @@ export const IMAGE_STRATEGY_KEY = 'tmd:img'
 export const AUTOSAVE_KEY = 'tmd:autosave'
 export const LOCALE_KEY = 'tmd:lang'
 export const AUTO_CHECK_UPDATE_KEY = 'tmd:auto-check-update'
+export const THEME_PRESET_KEY = 'tmd:theme-preset'
+export const CUSTOM_CSS_KEY = 'tmd:custom-css'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {
@@ -89,4 +91,24 @@ export function getAutoCheckUpdate(): boolean {
 /** 持久化"启动时自动检查更新"开关 */
 export function setAutoCheckUpdate(enabled: boolean) {
   localStorage.setItem(AUTO_CHECK_UPDATE_KEY, enabled ? 'true' : 'false')
+}
+
+/** 读取主题预设 id（'default' | 'sepia' | 'green' | 'github'，默认 default） */
+export function getThemePreset(): string {
+  return localStorage.getItem(THEME_PRESET_KEY) ?? 'default'
+}
+
+/** 持久化主题预设 id */
+export function setThemePreset(id: string) {
+  localStorage.setItem(THEME_PRESET_KEY, id)
+}
+
+/** 读取自定义 CSS（未设置返回空串） */
+export function getCustomCss(): string {
+  return localStorage.getItem(CUSTOM_CSS_KEY) ?? ''
+}
+
+/** 持久化自定义 CSS */
+export function setCustomCss(css: string) {
+  localStorage.setItem(CUSTOM_CSS_KEY, css)
 }

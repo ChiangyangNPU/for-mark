@@ -8,7 +8,15 @@ import type { UpdateStatus } from './native'
 import { applyDomTexts, menuLabels, getLocale, setLocale, t } from './i18n'
 import { isDarkTheme, applyTheme } from './theme'
 import { isAutosaveOn, setAutosaveOn } from './autosave'
-import { getImageStrategy, setImageStrategy, getAutoCheckUpdate, setAutoCheckUpdate } from './store'
+import {
+  getImageStrategy,
+  setImageStrategy,
+  getAutoCheckUpdate,
+  setAutoCheckUpdate,
+  getCustomCss,
+  getThemePreset,
+} from './store'
+import { changeThemePreset, changeCustomCss } from './theme-presets'
 import { renderTabs, updateTitle } from './tabs'
 import { currentMarkdown, updateWordCount } from './editor-core'
 import type { ImageStrategy } from './paste-image'
@@ -44,6 +52,12 @@ export function openSettings() {
     `input[name="set-img"][value="${imageStrategy}"]`,
   ) as HTMLInputElement | null
   if (imgRadio) imgRadio.checked = true
+  const presetRadio = overlay.querySelector(
+    `input[name="set-preset"][value="${getThemePreset()}"]`,
+  ) as HTMLInputElement | null
+  if (presetRadio) presetRadio.checked = true
+  const cssBox = document.getElementById('set-custom-css') as HTMLTextAreaElement | null
+  if (cssBox) cssBox.value = getCustomCss()
   const autoCheckBox = document.getElementById('set-auto-check-update') as HTMLInputElement | null
   if (autoCheckBox) autoCheckBox.checked = getAutoCheckUpdate()
 
@@ -76,6 +90,26 @@ export function wireSettings() {
     input.addEventListener('change', () => {
       void applyTheme((input as HTMLInputElement).value === 'dark')
     })
+  })
+  // 主题预设：持久化 + 即时应用（纯 CSS 变量层，不触碰编辑器）
+  document.querySelectorAll('input[name="set-preset"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      changeThemePreset((input as HTMLInputElement).value)
+    })
+  })
+  // 自定义 CSS：输入即应用（防抖交给 input 事件天然节流），「恢复默认」清空
+  const cssBox = document.getElementById('set-custom-css') as HTMLTextAreaElement | null
+  if (cssBox) {
+    cssBox.addEventListener('input', () => {
+      changeCustomCss(cssBox.value)
+    })
+  }
+  document.getElementById('css-reset-btn')?.addEventListener('click', () => {
+    const box = document.getElementById('set-custom-css') as HTMLTextAreaElement | null
+    if (box) {
+      box.value = ''
+      changeCustomCss('')
+    }
   })
   document.getElementById('set-autosave')?.addEventListener('change', (e) => {
     setAutosaveOn((e.target as HTMLInputElement).checked)

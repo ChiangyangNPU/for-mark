@@ -127,6 +127,51 @@
         </div>
 
         <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.themePreset">主题预设</div>
+          <label class="settings-option"
+            ><input type="radio" name="set-preset" value="default" /><span
+              data-i18n="settings.presetDefault"
+              >简约白（默认）</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-preset" value="sepia" /><span
+              data-i18n="settings.presetSepia"
+              >护眼米黄</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-preset" value="green" /><span
+              data-i18n="settings.presetGreen"
+              >护眼绿</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-preset" value="github" /><span
+              data-i18n="settings.presetGithub"
+              >GitHub 风</span
+            ></label
+          >
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.customCss">自定义 CSS</div>
+          <textarea
+            id="set-custom-css"
+            class="settings-textarea"
+            rows="6"
+            data-i18n-placeholder="settings.customCssPlaceholder"
+            placeholder="/* 自定义样式，例如：body { font-size: 18px; } */"
+          ></textarea>
+          <div class="settings-hint settings-row">
+            <span data-i18n="settings.customCssHint">即时生效，保存后全局持久</span>
+            <button id="css-reset-btn" class="tool-btn" data-i18n="settings.cssReset">
+              恢复默认
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-section">
           <div class="settings-label">
             <label class="settings-option">
               <input type="checkbox" id="set-autosave" />

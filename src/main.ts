@@ -23,6 +23,7 @@ import { native } from './native'
 import { t, applyDomTexts, menuLabels } from './i18n'
 import { setImagePasteContext } from './paste-image'
 import { applyTheme } from './theme'
+import { restoreThemeStyles } from './theme-presets'
 import {
   activeTab,
   getActiveTabId,
@@ -101,6 +102,8 @@ async function boot() {
     // 幂等再同步：<head> 内联脚本已在首帧前挂好 html.dark，这里兜底保持一致
     document.documentElement.classList.toggle('dark', dark)
     setMermaidTheme(dark ? 'dark' : 'default')
+    // 主题预设与自定义 CSS：恢复持久化的变量覆盖层
+    restoreThemeStyles()
 
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
     setEditorHooks({
