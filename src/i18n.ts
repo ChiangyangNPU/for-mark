@@ -77,6 +77,23 @@ export function menuLabels(): Record<string, string> {
     export: t('menu.export'),
     exportHtml: t('menu.exportHtml'),
     exportPdf: t('menu.exportPdf'),
+    format: t('menu.format'),
+    bold: t('menu.bold'),
+    italic: t('menu.italic'),
+    strike: t('menu.strike'),
+    inlineCode: t('menu.inlineCode'),
+    link: t('menu.link'),
+    h1: t('menu.h1'),
+    h2: t('menu.h2'),
+    h3: t('menu.h3'),
+    h4: t('menu.h4'),
+    h5: t('menu.h5'),
+    h6: t('menu.h6'),
+    paragraph: t('menu.paragraph'),
+    quote: t('menu.quote'),
+    codeBlock: t('menu.codeBlock'),
+    bulletList: t('menu.bulletList'),
+    orderedList: t('menu.orderedList'),
   }
 }
 

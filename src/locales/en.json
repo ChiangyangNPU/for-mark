@@ -72,7 +72,29 @@
     "export": "Export",
     "exportHtml": "Export HTML",
     "insertToc": "Insert TOC",
-    "exportPdf": "Print / Export PDF"
+    "exportPdf": "Print / Export PDF",
+    "format": "Format",
+    "bold": "Bold",
+    "italic": "Italic",
+    "strike": "Strikethrough",
+    "inlineCode": "Inline Code",
+    "link": "Link…",
+    "h1": "Heading 1",
+    "h2": "Heading 2",
+    "h3": "Heading 3",
+    "h4": "Heading 4",
+    "h5": "Heading 5",
+    "h6": "Heading 6",
+    "paragraph": "Body Text",
+    "quote": "Blockquote",
+    "codeBlock": "Code Block",
+    "bulletList": "Bullet List",
+    "orderedList": "Ordered List"
+  },
+  "linkBar": {
+    "placeholder": "Enter the link URL, press Enter to apply",
+    "apply": "Apply",
+    "cancel": "Cancel"
   },
   "settings": {
     "title": "Settings",

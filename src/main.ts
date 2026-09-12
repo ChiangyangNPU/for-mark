@@ -40,6 +40,7 @@ import {
 } from './tabs'
 import { openDocument, openFolder, openPath, saveDocument, renderFilesSidebar } from './files'
 import { wireDragDrop } from './dragdrop'
+import { applyFormatAction, wireLinkBar, closeLinkBar } from './format'
 import {
   mountEditor,
   currentMarkdown,
@@ -211,6 +212,7 @@ async function boot() {
       if (e.key === 'Escape') {
         closeMoreMenu()
         closeSettings()
+        closeLinkBar()
       }
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
@@ -232,6 +234,12 @@ async function boot() {
 
     // 菜单（Electron）
     native?.onMenu((action) => {
+      // 格式化命令：统一走 format 命令层（源码模式无 ProseMirror 编辑器，忽略）
+      if (action.startsWith('fmt-')) {
+        const view = getPmView()
+        if (view && !isSourceMode()) applyFormatAction(view, action)
+        return
+      }
       const handlers: Record<string, () => void> = {
         open: () => void openDocument(),
         'open-folder': () => void openFolder(),
@@ -258,6 +266,7 @@ async function boot() {
     wireDragDrop()
 
     wireFindBar()
+    wireLinkBar()
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()

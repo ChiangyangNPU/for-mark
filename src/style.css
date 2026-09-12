@@ -789,6 +789,11 @@ img {
   font-size: 12px;
 }
 
+/* 链接栏地址输入框：URL 较长，比查找输入框宽 */
+.link-input {
+  width: 300px;
+}
+
 .find-count {
   font-size: 11px;
   color: var(--muted);

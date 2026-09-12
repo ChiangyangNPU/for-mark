@@ -72,7 +72,29 @@
     "export": "导出",
     "exportHtml": "导出 HTML",
     "insertToc": "插入目录",
-    "exportPdf": "打印 / 导出 PDF"
+    "exportPdf": "打印 / 导出 PDF",
+    "format": "格式",
+    "bold": "加粗",
+    "italic": "斜体",
+    "strike": "删除线",
+    "inlineCode": "行内代码",
+    "link": "链接…",
+    "h1": "一级标题",
+    "h2": "二级标题",
+    "h3": "三级标题",
+    "h4": "四级标题",
+    "h5": "五级标题",
+    "h6": "六级标题",
+    "paragraph": "正文",
+    "quote": "引用",
+    "codeBlock": "代码块",
+    "bulletList": "无序列表",
+    "orderedList": "有序列表"
+  },
+  "linkBar": {
+    "placeholder": "输入链接地址，回车确认",
+    "apply": "应用",
+    "cancel": "取消"
   },
   "settings": {
     "title": "设置",

@@ -21,6 +21,7 @@ import { findPlugin, findClear } from './find'
 import { taskListClick } from './task-list'
 import { tocPlugins, fillTocBlocks } from './toc'
 import { imageSrcResolver } from './image-resolver'
+import { formatKeymap } from './format'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
 import { t } from './i18n'
@@ -69,7 +70,8 @@ export function updateWordCount(markdown: string) {
  * 插件清单：commonmark（基础语法）、gfm（表格/任务列表）、history（撤销重做）、
  * listener（内容监听）、mermaid（自研图表插件）、prism（代码高亮）、
  * math（KaTeX 公式）、pasteImage（粘贴图片）、findPlugin（查找高亮）、
- * taskListClick（任务复选框）、toc（目录块）、imageSrcResolver（相对路径图片）。
+ * taskListClick（任务复选框）、toc（目录块）、imageSrcResolver（相对路径图片）、
+ * formatKeymap（格式化快捷键）。
  */
 async function createEditor(markdown: string): Promise<Editor> {
   return Editor.make()
@@ -95,6 +97,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(taskListClick)
     .use(tocPlugins)
     .use(imageSrcResolver)
+    .use(formatKeymap)
     .create()
 }
 

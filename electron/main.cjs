@@ -77,6 +77,23 @@ const DEFAULT_MENU_LABELS = {
   export: '导出',
   exportHtml: '导出 HTML',
   exportPdf: '打印 / 导出 PDF',
+  format: '格式',
+  bold: '加粗',
+  italic: '斜体',
+  strike: '删除线',
+  inlineCode: '行内代码',
+  link: '链接…',
+  h1: '一级标题',
+  h2: '二级标题',
+  h3: '三级标题',
+  h4: '四级标题',
+  h5: '五级标题',
+  h6: '六级标题',
+  paragraph: '正文',
+  quote: '引用',
+  codeBlock: '代码块',
+  bulletList: '无序列表',
+  orderedList: '有序列表',
 }
 /** @type {Record<string, string>} */
 let menuLabels = { ...DEFAULT_MENU_LABELS }
@@ -199,6 +216,69 @@ function buildMenu() {
           label: L('exportPdf'),
           accelerator: 'CmdOrCtrl+P',
           click: () => sendToRenderer(IPC.menu, 'export-pdf'),
+        },
+      ],
+    },
+    {
+      // 格式栏：与渲染层 ProseMirror keymap 同一套命令（fmt-* action）。
+      // accelerator 由菜单消费，不会同时触发渲染层 keymap；
+      // mac 上 Cmd+Q 是退出应用，引用改用 Ctrl+Q（keymap 亦绑 Ctrl+q 兜底）
+      label: L('format'),
+      submenu: [
+        {
+          label: L('bold'),
+          accelerator: 'CmdOrCtrl+B',
+          click: () => sendToRenderer(IPC.menu, 'fmt-bold'),
+        },
+        {
+          label: L('italic'),
+          accelerator: 'CmdOrCtrl+I',
+          click: () => sendToRenderer(IPC.menu, 'fmt-italic'),
+        },
+        {
+          label: L('strike'),
+          click: () => sendToRenderer(IPC.menu, 'fmt-strike'),
+        },
+        {
+          label: L('inlineCode'),
+          click: () => sendToRenderer(IPC.menu, 'fmt-code'),
+        },
+        {
+          label: L('link'),
+          accelerator: 'CmdOrCtrl+K',
+          click: () => sendToRenderer(IPC.menu, 'fmt-link'),
+        },
+        { type: 'separator' },
+        ...[1, 2, 3, 4, 5, 6].map((level) => ({
+          label: L(`h${level}`),
+          accelerator: `CmdOrCtrl+${level}`,
+          click: () => sendToRenderer(IPC.menu, `fmt-h${level}`),
+        })),
+        {
+          label: L('paragraph'),
+          accelerator: 'CmdOrCtrl+0',
+          click: () => sendToRenderer(IPC.menu, 'fmt-paragraph'),
+        },
+        { type: 'separator' },
+        {
+          label: L('quote'),
+          accelerator: isMac ? 'Ctrl+Q' : 'CmdOrCtrl+Q',
+          click: () => sendToRenderer(IPC.menu, 'fmt-quote'),
+        },
+        {
+          label: L('codeBlock'),
+          accelerator: 'Shift+CmdOrCtrl+K',
+          click: () => sendToRenderer(IPC.menu, 'fmt-codeblock'),
+        },
+        {
+          label: L('bulletList'),
+          accelerator: 'Shift+CmdOrCtrl+8',
+          click: () => sendToRenderer(IPC.menu, 'fmt-bullet'),
+        },
+        {
+          label: L('orderedList'),
+          accelerator: 'Shift+CmdOrCtrl+9',
+          click: () => sendToRenderer(IPC.menu, 'fmt-ordered'),
         },
       ],
     },
