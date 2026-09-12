@@ -88,7 +88,6 @@ const L = (key) => menuLabels[key] ?? DEFAULT_MENU_LABELS[key]
 // 渲染层未就绪时先排队，收到 ready 信号后再发给渲染层
 /** @type {string[]} */
 const pendingOpenPaths = []
-let rendererReady = false
 
 /** @param {string} channel @param {unknown} payload */
 function sendToRenderer(channel, payload) {
@@ -98,10 +97,27 @@ function sendToRenderer(channel, payload) {
 
 /** @param {string} filePath */
 function queueOpenPath(filePath) {
-  if (rendererReady && mainWindow) {
-    sendToRenderer(IPC.openPath, filePath)
-  } else {
-    pendingOpenPaths.push(filePath)
+  pendingOpenPaths.push(filePath)
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    // 应用在后台无窗口（上次窗口已全部关闭）：重建窗口承载打开的文件，
+    // did-finish-load 后补发；并把应用带到前台（Finder 双击的用户预期）
+    createWindow()
+    app.focus({ steal: true })
+    return
+  }
+  flushPendingOpenPaths()
+}
+
+/** 把排队中的待打开文件发给渲染层，并把窗口带到前台 */
+function flushPendingOpenPaths() {
+  while (pendingOpenPaths.length) {
+    sendToRenderer(IPC.openPath, pendingOpenPaths.shift())
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (mainWindow.isMinimized()) mainWindow.restore()
+    mainWindow.show()
+    mainWindow.focus()
+    app.focus({ steal: true })
   }
 }
 
@@ -250,11 +266,7 @@ function createWindow() {
 
   // 窗口加载完成后，把排队中的待打开文件发给渲染层
   mainWindow.webContents.on('did-finish-load', () => {
-    if (rendererReady) {
-      while (pendingOpenPaths.length) {
-        sendToRenderer(IPC.openPath, pendingOpenPaths.shift())
-      }
-    }
+    flushPendingOpenPaths()
   })
 
   mainWindow.on('closed', () => {
@@ -556,10 +568,7 @@ ipcMain.handle(IPC.saveImage, async (_event, options) => {
 
 // 渲染层就绪：补发排队中的待打开文件
 ipcMain.on(IPC.ready, () => {
-  rendererReady = true
-  while (pendingOpenPaths.length) {
-    sendToRenderer(IPC.openPath, pendingOpenPaths.shift())
-  }
+  flushPendingOpenPaths()
 })
 
 // 渲染层把当前语言的菜单文案发来，重建菜单

@@ -10,6 +10,16 @@
 const { contextBridge, ipcRenderer } = require('electron')
 const IPC = require('./ipc.cjs')
 
+// open-path 消息可能早于渲染层注册处理器到达，先缓冲
+/** @type {string[]} */
+const openPathQueue = []
+/** @type {((filePath: string) => void) | null} */
+let openPathCallback = null
+ipcRenderer.on(IPC.openPath, (_event, filePath) => {
+  if (openPathCallback) openPathCallback(filePath)
+  else if (filePath) openPathQueue.push(filePath)
+})
+
 /** @type {import('../src/native.ts').NativeFileAPI} */
 const api = {
   /** 是否在 Electron 环境中（浏览器里为 undefined，渲染层据此降级） */
@@ -31,9 +41,15 @@ const api = {
   onAutosave: (callback) => {
     ipcRenderer.on(IPC.autosave, (_event, enabled) => callback(enabled))
   },
-  /** 文件关联：Finder 双击 .md / 系统打开方式传入的文件路径 */
+  /** 文件关联：Finder 双击 .md / 系统打开方式传入的文件路径。
+   *  消息可能在渲染层注册处理器之前到达（did-finish-load 早于 boot 完成），
+   *  故先在 preload 缓冲，注册后再补发。 */
   onOpenPath: (callback) => {
-    ipcRenderer.on(IPC.openPath, (_event, filePath) => callback(filePath))
+    openPathCallback = callback
+    while (openPathQueue.length) {
+    const p = openPathQueue.shift()
+    if (p) callback(p)
+  }
   },
   /** 把当前语言的菜单文案发给主进程重建菜单 */
   setLocaleInfo: (labels) => ipcRenderer.send(IPC.setLocaleInfo, labels),
