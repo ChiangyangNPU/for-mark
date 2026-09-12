@@ -237,10 +237,19 @@ html.win .win-controls {
 }
 
 .settings-header {
+  /* 吸顶标题栏：top 用负值抵消弹窗顶部内边距——
+     否则吸附点在内容盒顶部，上面会留出 20px 的缝露出滚过的内容 */
+  position: sticky;
+  top: -20px;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  background: var(--bg);
+  /* 负外边距突破弹窗内边距，让标题栏铺满到圆角边缘 */
+  margin: -20px -24px 12px;
+  padding: 16px 24px 12px;
+  border-radius: 12px 12px 0 0;
 }
 
 .settings-title {
