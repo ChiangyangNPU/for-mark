@@ -96,6 +96,17 @@
     "apply": "Apply",
     "cancel": "Cancel"
   },
+  "contextMenu": {
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "bold": "Bold",
+    "italic": "Italic",
+    "strike": "Strikethrough",
+    "inlineCode": "Inline Code",
+    "link": "Link…",
+    "removeLink": "Remove Link"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

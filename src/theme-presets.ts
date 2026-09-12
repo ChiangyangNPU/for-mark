@@ -22,7 +22,11 @@ export interface ThemePreset {
 }
 
 /** 深浅两套变量覆盖的模板 */
-function presetCss(light: Record<string, string>, dark: Record<string, string>, id: string): string {
+function presetCss(
+  light: Record<string, string>,
+  dark: Record<string, string>,
+  id: string,
+): string {
   const vars = (set: Record<string, string>) =>
     Object.entries(set)
       .map(([k, v]) => `  ${k}: ${v};`)

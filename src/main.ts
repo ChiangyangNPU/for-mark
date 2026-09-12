@@ -41,6 +41,7 @@ import {
 import { openDocument, openFolder, openPath, saveDocument, renderFilesSidebar } from './files'
 import { wireDragDrop } from './dragdrop'
 import { applyFormatAction, wireLinkBar, closeLinkBar } from './format'
+import { wireContextMenu, closeContextMenu } from './context-menu'
 import {
   mountEditor,
   currentMarkdown,
@@ -213,6 +214,7 @@ async function boot() {
         closeMoreMenu()
         closeSettings()
         closeLinkBar()
+        closeContextMenu()
       }
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
@@ -267,6 +269,7 @@ async function boot() {
 
     wireFindBar()
     wireLinkBar()
+    wireContextMenu()
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()

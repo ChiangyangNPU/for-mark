@@ -39,6 +39,7 @@ npm run dist           # Build installer (mac: dmg / win: nsis)
 - File tree (open folder) and recent files list
 - Drag & drop: drop a .md file onto the window to open it (new tab); drop images to insert them per the paste strategy
 - Formatting shortcuts & Format menu: headings 1–6 (Ctrl/Cmd+1–6), bold/italic (Ctrl/Cmd+B/I), link (Ctrl/Cmd+K), blockquote, lists, code block — all undoable
+- Right-click context menu in the editor: cut/copy/paste plus selection-aware format items (including remove link)
 - Dual paste-image strategy: inline data URL / save to `assets/` next to the document (falls back to inline on failure; images >5MB ignored)
 - Relative-path images resolved against the document directory for display (document data keeps relative paths)
 - Export: HTML (standalone file, Mermaid/KaTeX via CDN) and PDF (via the system print dialog)

@@ -96,6 +96,17 @@
     "apply": "应用",
     "cancel": "取消"
   },
+  "contextMenu": {
+    "cut": "剪切",
+    "copy": "复制",
+    "paste": "粘贴",
+    "bold": "加粗",
+    "italic": "斜体",
+    "strike": "删除线",
+    "inlineCode": "行内代码",
+    "link": "链接…",
+    "removeLink": "移除链接"
+  },
   "settings": {
     "title": "设置",
     "language": "界面语言",
