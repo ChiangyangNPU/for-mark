@@ -508,6 +508,12 @@ a {
   color: var(--accent);
 }
 
+/* 按住 Mod 键（Mac Cmd / 其他 Ctrl）悬停链接时提示可点击跳转 */
+#editor.mod-pressed a {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 blockquote {
   margin: 0;
   padding: 4px 16px;

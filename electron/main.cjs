@@ -14,7 +14,16 @@
  *
  * @author chiangyang
  */
-const { app, BrowserWindow, Menu, dialog, ipcMain, nativeTheme, session } = require('electron')
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  dialog,
+  ipcMain,
+  nativeTheme,
+  session,
+  shell,
+} = require('electron')
 const path = require('node:path')
 const fs = require('node:fs/promises')
 const fsSync = require('node:fs')
@@ -650,6 +659,31 @@ ipcMain.handle(IPC.saveImage, async (_event, options) => {
   const filePath = path.join(assetsDir, name)
   await fs.writeFile(filePath, Buffer.from(base64, 'base64'))
   return { name }
+})
+
+// ---------- IPC：链接跳转 ----------
+
+// 外部链接：仅放行 http/https，防任意协议（file:/javascript: 等）注入系统打开器
+/** @param {unknown} _event @param {unknown} url */
+ipcMain.handle(IPC.openExternal, (_event, url) => {
+  if (typeof url !== 'string') return false
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false
+  } catch {
+    return false
+  }
+  return shell.openExternal(url).then(
+    () => true,
+    () => false,
+  )
+})
+
+// 本地文件：交给系统默认应用打开（路径由渲染层按当前文档目录解析为绝对路径）
+/** @param {unknown} _event @param {unknown} filePath */
+ipcMain.handle(IPC.openLocalFile, (_event, filePath) => {
+  if (typeof filePath !== 'string' || !filePath) return 'invalid path'
+  return shell.openPath(filePath)
 })
 
 // 渲染层就绪：补发排队中的待打开文件

@@ -42,6 +42,10 @@ export interface NativeFileAPI {
     name: string
     base64: string
   }): Promise<{ name: string } | null>
+  /** 链接点击：打开外部 http/https 链接（主进程校验协议白名单） */
+  openExternal(url: string): Promise<boolean>
+  /** 链接点击：系统默认应用打开本地文件（绝对路径），返回错误串（空串为成功） */
+  openLocalFile(filePath: string): Promise<string>
   /** 拖入文件换绝对路径（Electron 32+ 移除了 File.path，经 preload webUtils 解析） */
   getPathForFile(file: File): string
   /** 手动触发检查更新（设置面板"检查更新"按钮） */
@@ -111,6 +115,8 @@ export interface IpcChannels {
   ready: string
   setAutosaveEnabled: string
   saveImage: string
+  openExternal: string
+  openLocalFile: string
   updateCheck: string
   updateStatus: string
   updateDownload: string

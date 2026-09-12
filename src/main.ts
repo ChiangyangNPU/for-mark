@@ -42,6 +42,7 @@ import { openDocument, openFolder, openPath, saveDocument, renderFilesSidebar } 
 import { wireDragDrop } from './dragdrop'
 import { applyFormatAction, wireLinkBar, closeLinkBar } from './format'
 import { wireContextMenu, closeContextMenu } from './context-menu'
+import { setLinkNavContext, wireLinkNav } from './link-nav'
 import {
   mountEditor,
   currentMarkdown,
@@ -207,6 +208,10 @@ async function boot() {
       getStrategy: () => getCurrentImageStrategy(),
       getBaseDir: () => getActiveBaseDir(),
     })
+
+    // 链接跳转上下文：相对路径按当前标签页所在目录解析；悬停 Mod 键显示 pointer
+    setLinkNavContext({ getBaseDir: () => getActiveBaseDir() })
+    wireLinkNav()
 
     // 快捷键（源码模式下 F 键交给 CodeMirror）
     window.addEventListener('keydown', (e) => {

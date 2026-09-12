@@ -21,6 +21,7 @@ import { findPlugin, findClear } from './find'
 import { taskListClick } from './task-list'
 import { tocPlugins, fillTocBlocks } from './toc'
 import { imageSrcResolver } from './image-resolver'
+import { linkNav } from './link-nav'
 import { formatKeymap } from './format'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
@@ -97,6 +98,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(taskListClick)
     .use(tocPlugins)
     .use(imageSrcResolver)
+    .use(linkNav)
     .use(formatKeymap)
     .create()
 }

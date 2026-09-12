@@ -25,6 +25,8 @@ const channels = {
   ready: 'tmd:ready',
   setAutosaveEnabled: 'tmd:set-autosave-enabled',
   saveImage: 'tmd:save-image',
+  openExternal: 'tmd:open-external',
+  openLocalFile: 'tmd:open-local-file',
   updateCheck: 'tmd:update-check',
   updateStatus: 'tmd:update-status',
   updateDownload: 'tmd:update-download',

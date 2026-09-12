@@ -47,9 +47,9 @@ const api = {
   onOpenPath: (callback) => {
     openPathCallback = callback
     while (openPathQueue.length) {
-    const p = openPathQueue.shift()
-    if (p) callback(p)
-  }
+      const p = openPathQueue.shift()
+      if (p) callback(p)
+    }
   },
   /** 把当前语言的菜单文案发给主进程重建菜单 */
   setLocaleInfo: (labels) => ipcRenderer.send(IPC.setLocaleInfo, labels),
@@ -59,6 +59,10 @@ const api = {
   setAutosaveEnabled: (enabled) => ipcRenderer.send(IPC.setAutosaveEnabled, enabled),
   /** 粘贴图片落盘：写入文档同目录 assets/ 文件夹 */
   saveImage: (options) => ipcRenderer.invoke(IPC.saveImage, options),
+  /** 链接点击：打开外部 http/https 链接（主进程校验协议白名单） */
+  openExternal: (url) => ipcRenderer.invoke(IPC.openExternal, url),
+  /** 链接点击：用系统默认应用打开本地文件（绝对路径），返回错误串（空串为成功） */
+  openLocalFile: (filePath) => ipcRenderer.invoke(IPC.openLocalFile, filePath),
   /** 拖入文件换绝对路径（Electron 32+ 移除了 File.path，用 webUtils 同步解析） */
   getPathForFile: (file) => webUtils.getPathForFile(file),
   /** 手动触发检查更新（设置面板"检查更新"按钮） */
