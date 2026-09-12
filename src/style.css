@@ -247,8 +247,8 @@ html.win .win-controls {
   justify-content: space-between;
   background: var(--bg);
   /* 负外边距突破弹窗内边距，让标题栏铺满到圆角边缘 */
-  margin: -20px -24px 12px;
-  padding: 16px 24px 12px;
+  margin: -20px -24px 2px;
+  padding: 5px 24px 5px;
   border-radius: 12px 12px 0 0;
 }
 
