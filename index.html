@@ -111,27 +111,17 @@
         </div>
 
         <div class="settings-section">
-          <div class="settings-label" data-i18n="settings.theme">主题外观</div>
-          <label class="settings-option"
-            ><input type="radio" name="set-theme" value="light" /><span
-              data-i18n="settings.themeLight"
-              >浅色</span
-            ></label
-          >
-          <label class="settings-option"
-            ><input type="radio" name="set-theme" value="dark" /><span
-              data-i18n="settings.themeDark"
-              >深色</span
-            ></label
-          >
-        </div>
-
-        <div class="settings-section">
-          <div class="settings-label" data-i18n="settings.themePreset">主题预设</div>
+          <div class="settings-label" data-i18n="settings.themePreset">主题</div>
           <label class="settings-option"
             ><input type="radio" name="set-preset" value="default" /><span
               data-i18n="settings.presetDefault"
               >简约白（默认）</span
+            ></label
+          >
+          <label class="settings-option"
+            ><input type="radio" name="set-preset" value="dark" /><span
+              data-i18n="settings.presetDark"
+              >深色</span
             ></label
           >
           <label class="settings-option"
@@ -146,12 +136,9 @@
               >护眼绿</span
             ></label
           >
-          <label class="settings-option"
-            ><input type="radio" name="set-preset" value="github" /><span
-              data-i18n="settings.presetGithub"
-              >GitHub 风</span
-            ></label
-          >
+          <div class="settings-hint" data-i18n="settings.themePresetHint">
+            选择预设会同时应用其深浅模式；工具栏按钮可随时切换深浅
+          </div>
         </div>
 
         <div class="settings-section">

@@ -6,7 +6,7 @@
 import { native } from './native'
 import type { UpdateStatus } from './native'
 import { applyDomTexts, menuLabels, getLocale, setLocale, t } from './i18n'
-import { isDarkTheme, applyTheme } from './theme'
+import { isDarkTheme } from './theme'
 import { isAutosaveOn, setAutosaveOn } from './autosave'
 import {
   getImageStrategy,
@@ -38,11 +38,15 @@ export function openSettings() {
     `input[name="set-lang"][value="${getLocale()}"]`,
   ) as HTMLInputElement | null
   if (langRadio) langRadio.checked = true
+  // 主题列表高亮：按"预设 + 深浅"映射到列表项
+  // （default+浅→简约白；default+深→深色；sepia/green→各自预设项）
   const isDark = isDarkTheme()
-  const themeRadio = overlay.querySelector(
-    `input[name="set-theme"][value="${isDark ? 'dark' : 'light'}"]`,
+  const preset = getThemePreset()
+  const listItemValue = isDark && preset === 'default' ? 'dark' : preset
+  const presetRadio = overlay.querySelector(
+    `input[name="set-preset"][value="${listItemValue}"]`,
   ) as HTMLInputElement | null
-  if (themeRadio) themeRadio.checked = true
+  if (presetRadio) presetRadio.checked = true
   const autosaveBox = document.getElementById('set-autosave') as HTMLInputElement | null
   if (autosaveBox) {
     autosaveBox.checked = isAutosaveOn() && !!native
@@ -52,10 +56,6 @@ export function openSettings() {
     `input[name="set-img"][value="${imageStrategy}"]`,
   ) as HTMLInputElement | null
   if (imgRadio) imgRadio.checked = true
-  const presetRadio = overlay.querySelector(
-    `input[name="set-preset"][value="${getThemePreset()}"]`,
-  ) as HTMLInputElement | null
-  if (presetRadio) presetRadio.checked = true
   const cssBox = document.getElementById('set-custom-css') as HTMLTextAreaElement | null
   if (cssBox) cssBox.value = getCustomCss()
   const autoCheckBox = document.getElementById('set-auto-check-update') as HTMLInputElement | null
@@ -86,12 +86,8 @@ export function wireSettings() {
       native?.setLocaleInfo(menuLabels())
     })
   })
-  document.querySelectorAll('input[name="set-theme"]').forEach((input) => {
-    input.addEventListener('change', () => {
-      void applyTheme((input as HTMLInputElement).value === 'dark')
-    })
-  })
-  // 主题预设：持久化 + 即时应用（纯 CSS 变量层，不触碰编辑器）
+  // 主题列表：持久化 + 即时应用（纯 CSS 变量层，不触碰编辑器）；
+  // 深色项 = 切换到主界面深色模式
   document.querySelectorAll('input[name="set-preset"]').forEach((input) => {
     input.addEventListener('change', () => {
       changeThemePreset((input as HTMLInputElement).value)

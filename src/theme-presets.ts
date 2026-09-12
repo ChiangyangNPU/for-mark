@@ -11,6 +11,7 @@
  * @author chiangyang
  */
 import { getThemePreset, setThemePreset, getCustomCss, setCustomCss } from './store'
+import { applyTheme } from './theme'
 
 export interface ThemePreset {
   id: string
@@ -31,6 +32,13 @@ function presetCss(light: Record<string, string>, dark: Record<string, string>, 
 
 export const THEME_PRESETS: ThemePreset[] = [
   { id: 'default', nameKey: 'settings.presetDefault', css: '' },
+  {
+    // 主界面的深色主题：本体就是 html.dark 内建变量，无需注入 CSS；
+    // 选择它 = 切换到深色模式
+    id: 'dark',
+    nameKey: 'settings.presetDark',
+    css: '',
+  },
   {
     id: 'sepia',
     nameKey: 'settings.presetSepia',
@@ -97,39 +105,6 @@ export const THEME_PRESETS: ThemePreset[] = [
       'green',
     ),
   },
-  {
-    id: 'github',
-    nameKey: 'settings.presetGithub',
-    css: presetCss(
-      {
-        '--bg': '#ffffff',
-        '--fg': '#1f2328',
-        '--muted': '#656d76',
-        '--border': '#d0d7de',
-        '--accent': '#0969da',
-        '--code-bg': '#eff1f3',
-        '--pre-bg': '#f6f8fa',
-        '--quote-bg': '#f6f8fa',
-        '--toolbar-bg': 'rgba(255, 255, 255, 0.85)',
-        '--error-fg': '#d1242f',
-        '--error-bg': '#ffebe9',
-      },
-      {
-        '--bg': '#0d1117',
-        '--fg': '#e6edf3',
-        '--muted': '#7d8590',
-        '--border': '#30363d',
-        '--accent': '#2f81f7',
-        '--code-bg': '#161b22',
-        '--pre-bg': '#161b22',
-        '--quote-bg': '#161b22',
-        '--toolbar-bg': 'rgba(13, 17, 23, 0.85)',
-        '--error-fg': '#f85149',
-        '--error-bg': '#3c1614',
-      },
-      'github',
-    ),
-  },
 ]
 
 /** 应用主题预设：写入 html[data-theme-preset] 并注入对应变量覆盖 */
@@ -171,10 +146,16 @@ export function restoreThemeStyles(): void {
   applyCustomCss(getCustomCss())
 }
 
-/** 保存主题预设（持久化 + 即时应用） */
+/** 保存主题预设（持久化 + 即时应用）。
+ *
+ * 深色预设 = 切换到主界面深色模式（预设回落为 default）；
+ * 其余预设按各自的浅色外观应用（当前若为深色会切回浅色）。
+ */
 export function changeThemePreset(id: string): void {
-  setThemePreset(id)
-  applyThemePreset(id)
+  const isDarkPreset = id === 'dark'
+  setThemePreset(isDarkPreset ? 'default' : id)
+  applyThemePreset(isDarkPreset ? 'default' : id)
+  void applyTheme(isDarkPreset)
 }
 
 /** 保存自定义 CSS（持久化 + 即时应用） */
