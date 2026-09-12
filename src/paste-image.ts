@@ -59,21 +59,37 @@ export const pasteImage = $prose(
 
           // 异步插入期间用户可能继续输入，捕获 paste 时刻的选区，
           // 避免图片落到完成时的选区位置（竞态错位）
-          const selection = view.state.selection
-          for (const file of files) {
-            if (file.size > MAX_IMAGE_BYTES) {
-              console.warn(
-                `[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`,
-              )
-              continue
-            }
-            void insertImage(view, file, selection)
-          }
+          void insertImageFiles(view, files, view.state.selection)
           return true
         },
       },
     }),
 )
+
+/**
+ * 按当前策略插入一批图片（拖拽与粘贴共用）：
+ * assets 落盘失败自动降级内联；异步插入期间沿用传入时刻的选区，避免竞态错位。
+ * 返回实际插入的张数（超限图片被忽略）。
+ */
+export async function insertImageFiles(
+  view: EditorView,
+  files: File[],
+  selection?: Selection,
+): Promise<number> {
+  const images = files.filter((f) => f.type.startsWith('image/'))
+  if (!images.length) return 0
+  const sel = selection ?? view.state.selection
+  let inserted = 0
+  for (const file of images) {
+    if (file.size > MAX_IMAGE_BYTES) {
+      console.warn(`[tmd] 图片超过 ${MAX_IMAGE_BYTES / 1024 / 1024}MB，已忽略：${file.name}`)
+      continue
+    }
+    await insertImage(view, file, sel)
+    inserted++
+  }
+  return inserted
+}
 
 /** 读取图片并按当前策略插入：assets 落盘失败时自动降级为内联 */
 async function insertImage(view: EditorView, file: File, selection: Selection) {

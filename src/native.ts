@@ -42,6 +42,8 @@ export interface NativeFileAPI {
     name: string
     base64: string
   }): Promise<{ name: string } | null>
+  /** 拖入文件换绝对路径（Electron 32+ 移除了 File.path，经 preload webUtils 解析） */
+  getPathForFile(file: File): string
   /** 手动触发检查更新（设置面板"检查更新"按钮） */
   checkForUpdates(): Promise<void>
   /** 用户同意后触发下载 */

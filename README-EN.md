@@ -37,6 +37,7 @@ npm run dist           # Build installer (mac: dmg / win: nsis)
 - Find & replace (decorator-based highlighting in WYSIWYG mode, replace current / replace all)
 - Outline panel (headings level 1-3, click to jump) and TOC block (GitHub-style anchors)
 - File tree (open folder) and recent files list
+- Drag & drop: drop a .md file onto the window to open it (new tab); drop images to insert them per the paste strategy
 - Dual paste-image strategy: inline data URL / save to `assets/` next to the document (falls back to inline on failure; images >5MB ignored)
 - Relative-path images resolved against the document directory for display (document data keeps relative paths)
 - Export: HTML (standalone file, Mermaid/KaTeX via CDN) and PDF (via the system print dialog)

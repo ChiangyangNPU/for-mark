@@ -269,6 +269,12 @@ function createWindow() {
     flushPendingOpenPaths()
   })
 
+  // 兜底阻止页面导航：拖文件进窗口时 Chromium 默认会导航到该文件，
+  // 渲染层 drop 处理器已 preventDefault，这里拦截漏网情况（应用为单页，无合法导航）
+  mainWindow.webContents.on('will-navigate', (event) => {
+    event.preventDefault()
+  })
+
   mainWindow.on('closed', () => {
     mainWindow = null
   })

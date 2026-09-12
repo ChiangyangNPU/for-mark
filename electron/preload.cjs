@@ -7,7 +7,7 @@
  *
  * @author chiangyang
  */
-const { contextBridge, ipcRenderer } = require('electron')
+const { contextBridge, ipcRenderer, webUtils } = require('electron')
 const IPC = require('./ipc.cjs')
 
 // open-path 消息可能早于渲染层注册处理器到达，先缓冲
@@ -59,6 +59,8 @@ const api = {
   setAutosaveEnabled: (enabled) => ipcRenderer.send(IPC.setAutosaveEnabled, enabled),
   /** 粘贴图片落盘：写入文档同目录 assets/ 文件夹 */
   saveImage: (options) => ipcRenderer.invoke(IPC.saveImage, options),
+  /** 拖入文件换绝对路径（Electron 32+ 移除了 File.path，用 webUtils 同步解析） */
+  getPathForFile: (file) => webUtils.getPathForFile(file),
   /** 手动触发检查更新（设置面板"检查更新"按钮） */
   checkForUpdates: () => ipcRenderer.invoke(IPC.updateCheck),
   /** 用户同意后触发下载 */

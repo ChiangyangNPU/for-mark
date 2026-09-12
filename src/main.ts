@@ -39,6 +39,7 @@ import {
   markDirty,
 } from './tabs'
 import { openDocument, openFolder, openPath, saveDocument, renderFilesSidebar } from './files'
+import { wireDragDrop } from './dragdrop'
 import {
   mountEditor,
   currentMarkdown,
@@ -252,6 +253,9 @@ async function boot() {
     native?.onAutosave((enabled) => setAutosaveOn(enabled))
     // 文件关联：Finder 双击 / 系统打开方式
     native?.onOpenPath((path) => void openPath(path))
+
+    // 拖拽打开：拖 .md 进窗口新标签打开，拖图片按粘贴策略插入
+    wireDragDrop()
 
     wireFindBar()
     renderFilesSidebar()
