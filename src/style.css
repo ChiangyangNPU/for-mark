@@ -216,6 +216,26 @@ html.win .win-controls {
   padding: 20px 24px;
 }
 
+/* 细圆角滚动条：默认方形轨道会压住弹窗的圆角，看起来像被裁切 */
+.settings-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.settings-modal::-webkit-scrollbar-track {
+  background: transparent;
+  /* 上下留出 12px 圆角区，滑块滚到两端时不再压住圆角 */
+  margin: 12px 0;
+}
+
+.settings-modal::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.settings-modal::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
 .settings-header {
   display: flex;
   align-items: center;
