@@ -42,6 +42,7 @@ npm run dist           # 打包安装包（mac: dmg / win: nsis）
 - 导出：HTML（独立文件，Mermaid/KaTeX 走 CDN）、PDF（经系统打印对话框）
 - 自动保存（5 秒周期写回，设置面板与菜单共用开关）
 - 深色/浅色主题切换（图表原地重渲，不重建编辑器，保住撤销历史/焦点/滚动位置）
+- 主题预设（简约白 / 深色 / 羊皮纸 / 护眼绿）与自定义 CSS 注入（设置面板文本域，即时生效）
 - 多语言界面（简体中文 / English，跟随系统，设置面板可切换）
 - 自动更新（Gitee / GitHub 双源，发现新版本弹窗询问，不静默下载）
 - **Electron 桌面壳**（`electron/`）：
@@ -68,6 +69,7 @@ src/main.ts           应用启动与全局装配（boot / hooks 注入 / 快捷
 src/editor-core.ts    编辑器枢纽（创建/重建/源码模式/内容取回）
 src/tabs.ts           多标签页状态机
 src/mermaid.ts        Mermaid 实时渲染插件（核心）
+src/theme-presets.ts  主题预设与自定义 CSS 注入
 src/find.ts           查找替换（装饰器实现）
 src/toc.ts            目录（TOC）块
 src/paste-image.ts    粘贴图片插件（inline / assets 双策略）

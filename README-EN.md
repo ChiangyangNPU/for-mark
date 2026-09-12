@@ -42,6 +42,7 @@ npm run dist           # Build installer (mac: dmg / win: nsis)
 - Export: HTML (standalone file, Mermaid/KaTeX via CDN) and PDF (via the system print dialog)
 - Autosave (writes back every 5 seconds; one shared switch for the settings panel and the menu)
 - Dark/light theme switching (diagrams re-rendered in place — the editor is never rebuilt, preserving undo history / focus / scroll position)
+- Theme presets (Default / Dark / Sepia / Green) and custom CSS injection (settings-panel textarea, takes effect immediately)
 - Multilingual UI (Simplified Chinese / English, follows the system, switchable in the settings panel)
 - Auto-update (dual Gitee / GitHub feeds; a dialog asks before downloading, never silent)
 - **Electron desktop shell** (`electron/`):
@@ -68,6 +69,7 @@ src/main.ts               App startup & global wiring (boot / hooks injection / 
 src/editor-core.ts        Editor hub (create / rebuild / source mode / content retrieval)
 src/tabs.ts               Multi-tab state machine
 src/mermaid.ts            Mermaid real-time rendering plugin (core)
+src/theme-presets.ts      Theme presets & custom CSS injection
 src/find.ts               Find & replace (decorator-based)
 src/toc.ts                Table-of-contents (TOC) block
 src/paste-image.ts        Pasted-image plugin (inline / assets dual strategy)
