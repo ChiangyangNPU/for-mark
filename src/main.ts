@@ -63,6 +63,7 @@ import {
   getCurrentImageStrategy,
   applySourceLineNumbers,
 } from './settings'
+import { applyTypography } from './typography'
 import { saveDoc, loadDoc, clearDoc, getTheme } from './store'
 
 // ---------------------------------------------------------------------------
@@ -119,6 +120,8 @@ async function boot() {
     restoreThemeStyles()
     // 源码模式行号开关：恢复持久化状态（body class，CSS 层控制）
     applySourceLineNumbers()
+    // 排版设置：恢复持久化配置（CSS 变量层，不触碰编辑器实例）
+    applyTypography()
 
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
     setEditorHooks({

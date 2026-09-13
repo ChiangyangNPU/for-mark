@@ -19,6 +19,7 @@ import {
   setSourceLineNumbers,
 } from './store'
 import { changeThemePreset, changeCustomCss } from './theme-presets'
+import { reflectTypography, wireTypography } from './typography'
 import { renderTabs, updateTitle } from './tabs'
 import { currentMarkdown, updateWordCount } from './editor-core'
 import type { ImageStrategy } from './paste-image'
@@ -69,6 +70,8 @@ export function openSettings() {
   if (autoCheckBox) autoCheckBox.checked = getAutoCheckUpdate()
   const linenoBox = document.getElementById('set-linenos') as HTMLInputElement | null
   if (linenoBox) linenoBox.checked = getSourceLineNumbers()
+  // 排版设置反射（typography 模块自持）
+  reflectTypography()
 
   overlay.hidden = false
 }
@@ -80,6 +83,8 @@ export function closeSettings() {
 
 /** 设置面板全部控件事件装配（boot 时调用一次） */
 export function wireSettings() {
+  // 排版区控件由 typography 模块自装
+  wireTypography()
   document.getElementById('settings-close')?.addEventListener('click', closeSettings)
   document.getElementById('settings-overlay')?.addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeSettings()

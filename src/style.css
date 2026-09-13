@@ -301,6 +301,33 @@ html.win .win-controls {
   margin-top: 6px;
 }
 
+/* 排版区小节标题：弱于 settings-label 一级 */
+.settings-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 2px;
+}
+
+/* 排版档位横排选项：档位多（字号 6 档），纵排会把面板拉得过长 */
+.settings-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+}
+
+/* 排版区自定义字体输入框 */
+.settings-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 12px;
+}
+
 /* 更新区块：检查按钮 + 状态文字 + 重启按钮 */
 .settings-update-row {
   display: flex;
@@ -465,7 +492,8 @@ html.win .win-controls {
   /* width:100% 防止 flex 容器中 margin:auto 导致的"随内容收缩"塌陷：
      空文档时编辑器宽度会变成 0，点击无法聚焦 */
   width: 100%;
-  max-width: 860px;
+  /* 排版设置「编辑区宽度」（settings → 排版），默认 860px */
+  max-width: var(--editor-page-width, 860px);
   margin: 0 auto;
   padding: 40px 32px 120px;
 }
@@ -473,8 +501,13 @@ html.win .win-controls {
 .ProseMirror {
   outline: none;
   min-height: 60vh;
-  font-size: 16px;
-  line-height: 1.75;
+  /* 排版设置（settings → 排版）：字体/字号/行距/换行，空值回落内建默认 */
+  font-family: var(--editor-font, inherit);
+  font-size: var(--editor-font-size, 16px);
+  line-height: var(--editor-line-height, 1.75);
+  /* 默认软换行（与 prosemirror.css 一致）；关闭自动换行时注入 pre + 横向滚动 */
+  white-space: var(--editor-white-space, pre-wrap);
+  overflow-x: var(--editor-overflow-x, visible);
 }
 
 .ProseMirror > * + * {

@@ -261,6 +261,116 @@
         </div>
 
         <div class="settings-section">
+          <div class="settings-label" data-i18n="settings.typography">排版</div>
+
+          <div class="settings-sub" data-i18n="settings.font">字体</div>
+          <div class="settings-options">
+            <label class="settings-option"
+              ><input type="radio" name="set-font" value="default" /><span
+                data-i18n="settings.fontDefault"
+                >默认</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-font" value="song" /><span
+                data-i18n="settings.fontSong"
+                >宋体</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-font" value="hei" /><span data-i18n="settings.fontHei"
+                >黑体</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-font" value="kai" /><span data-i18n="settings.fontKai"
+                >楷体</span
+              ></label
+            >
+          </div>
+          <input
+            id="set-font-custom"
+            class="settings-input"
+            data-i18n-placeholder="settings.fontCustomPlaceholder"
+            placeholder="自定义字体栈，如：'仿宋', FangSong, serif"
+          />
+
+          <div class="settings-sub" data-i18n="settings.fontSize">字号</div>
+          <div class="settings-options">
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="14" /><span>14</span></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="15" /><span>15</span></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="" /><span
+                data-i18n="settings.fontSizeDefault"
+                >16（默认）</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="17" /><span>17</span></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="18" /><span>18</span></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-fs" value="20" /><span>20</span></label
+            >
+          </div>
+
+          <div class="settings-sub" data-i18n="settings.lineHeight">行距</div>
+          <div class="settings-options">
+            <label class="settings-option"
+              ><input type="radio" name="set-lh" value="1.5" /><span>1.5</span></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-lh" value="" /><span
+                data-i18n="settings.lineHeightDefault"
+                >1.75（默认）</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-lh" value="2" /><span>2.0</span></label
+            >
+          </div>
+
+          <div class="settings-sub" data-i18n="settings.pageWidth">编辑区宽度</div>
+          <div class="settings-options">
+            <label class="settings-option"
+              ><input type="radio" name="set-pw" value="720" /><span
+                data-i18n="settings.widthNarrow"
+                >窄</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-pw" value="" /><span data-i18n="settings.widthDefault"
+                >标准（默认）</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-pw" value="980" /><span data-i18n="settings.widthWide"
+                >宽</span
+              ></label
+            >
+            <label class="settings-option"
+              ><input type="radio" name="set-pw" value="full" /><span data-i18n="settings.widthFull"
+                >全宽</span
+              ></label
+            >
+          </div>
+
+          <label class="settings-option">
+            <input type="checkbox" id="set-wrap" />
+            <span data-i18n="settings.wrap">自动换行</span>
+          </label>
+          <div class="settings-hint" data-i18n="settings.typographyHint">
+            仅作用于正文编辑区，即时生效；关闭自动换行后长行横向滚动
+          </div>
+        </div>
+
+        <div class="settings-section">
           <div class="settings-label">
             <label class="settings-option">
               <input type="checkbox" id="set-autosave" />

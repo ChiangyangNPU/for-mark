@@ -17,6 +17,7 @@ export const AUTO_CHECK_UPDATE_KEY = 'tmd:auto-check-update'
 export const THEME_PRESET_KEY = 'tmd:theme-preset'
 export const CUSTOM_CSS_KEY = 'tmd:custom-css'
 export const SOURCE_LINENOS_KEY = 'tmd:src-linenos'
+export const TYPOGRAPHY_KEY = 'tmd:typography'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {
@@ -122,4 +123,45 @@ export function getSourceLineNumbers(): boolean {
 /** 持久化源码模式行号开关 */
 export function setSourceLineNumbers(enabled: boolean) {
   localStorage.setItem(SOURCE_LINENOS_KEY, enabled ? 'true' : 'false')
+}
+
+/** 排版设置（编辑区外观，各项空值 = 跟随默认） */
+export interface Typography {
+  /** font-family 值：'' 跟随默认；否则为字体预设栈或用户自定义栈 */
+  font: string
+  /** 正文字号（px 数字字符串）：'' = 默认 16 */
+  fontSize: string
+  /** 正文行距：'' = 默认 1.75；否则为如 '1.5' / '2' */
+  lineHeight: string
+  /** 编辑区宽度（px 数字字符串）：'' = 默认 860；'full' = 全宽 */
+  pageWidth: string
+  /** 自动换行：'on'（默认，长行软换行）| 'off'（长行横向滚动） */
+  wrap: string
+}
+
+/** 默认排版配置（全部跟随内置样式） */
+export function defaultTypography(): Typography {
+  return { font: '', fontSize: '', lineHeight: '', pageWidth: '', wrap: 'on' }
+}
+
+/** 读取排版设置（解析失败或字段缺失时逐项回落默认值） */
+export function getTypography(): Typography {
+  const base = defaultTypography()
+  try {
+    const raw = JSON.parse(localStorage.getItem(TYPOGRAPHY_KEY) ?? '{}') as Partial<Typography>
+    return {
+      font: typeof raw.font === 'string' ? raw.font : base.font,
+      fontSize: typeof raw.fontSize === 'string' ? raw.fontSize : base.fontSize,
+      lineHeight: typeof raw.lineHeight === 'string' ? raw.lineHeight : base.lineHeight,
+      pageWidth: typeof raw.pageWidth === 'string' ? raw.pageWidth : base.pageWidth,
+      wrap: raw.wrap === 'off' ? 'off' : base.wrap,
+    }
+  } catch {
+    return base
+  }
+}
+
+/** 持久化排版设置 */
+export function setTypography(typography: Typography) {
+  localStorage.setItem(TYPOGRAPHY_KEY, JSON.stringify(typography))
 }
