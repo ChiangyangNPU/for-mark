@@ -44,6 +44,7 @@ import { applyFormatAction, wireLinkBar, closeLinkBar } from './format'
 import { wireContextMenu, closeContextMenu } from './context-menu'
 import { setLinkNavContext, wireLinkNav } from './link-nav'
 import { openQuickSwitch, closeQuickSwitch, wireQuickSwitch } from './quick-switch'
+import { wireTableToolbar } from './table-toolbar'
 import {
   mountEditor,
   currentMarkdown,
@@ -281,6 +282,8 @@ async function boot() {
     wireLinkBar()
     wireContextMenu()
     wireQuickSwitch()
+    // 表格工具栏按钮：源码模式下无 PM 视图，忽略
+    wireTableToolbar(() => (isSourceMode() ? null : getPmView()))
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()

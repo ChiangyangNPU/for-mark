@@ -111,6 +111,22 @@
     "placeholder": "Search files by name, Enter to open",
     "empty": "No matching files"
   },
+  "tt": {
+    "rowAdd": "+Row",
+    "rowAddTitle": "Insert a row below",
+    "rowDel": "−Row",
+    "rowDelTitle": "Delete current row (deletes the table when it's the last row)",
+    "colAdd": "+Col",
+    "colAddTitle": "Insert a column to the right",
+    "colDel": "−Col",
+    "colDelTitle": "Delete current column (deletes the table when it's the last column)",
+    "alignLeft": "L",
+    "alignLeftTitle": "Align current column left",
+    "alignCenter": "C",
+    "alignCenterTitle": "Align current column center",
+    "alignRight": "R",
+    "alignRightTitle": "Align current column right"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

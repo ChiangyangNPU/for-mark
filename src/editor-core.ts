@@ -23,6 +23,7 @@ import { taskListClick } from './task-list'
 import { tocPlugins, fillTocBlocks } from './toc'
 import { imageSrcResolver } from './image-resolver'
 import { linkNav } from './link-nav'
+import { tableToolbar } from './table-toolbar'
 import { formatKeymap } from './format'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
@@ -102,6 +103,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(tocPlugins)
     .use(imageSrcResolver)
     .use(linkNav)
+    .use(tableToolbar)
     .use(formatKeymap)
     .create()
 }

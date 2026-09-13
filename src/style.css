@@ -594,6 +594,41 @@ a {
   text-align: center;
 }
 
+/* ---------------- 表格悬浮工具栏 ---------------- */
+
+.table-toolbar {
+  position: fixed;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* display:flex 会覆盖 hidden 属性的 UA 样式，必须显式关闭 */
+.table-toolbar[hidden] {
+  display: none;
+}
+
+.tt-btn {
+  padding: 4px 8px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tt-btn:hover {
+  background: var(--code-bg);
+}
+
 blockquote {
   margin: 0;
   padding: 4px 16px;

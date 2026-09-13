@@ -111,6 +111,22 @@
     "placeholder": "搜索文件名，回车打开",
     "empty": "无匹配文件"
   },
+  "tt": {
+    "rowAdd": "行+",
+    "rowAddTitle": "在下方插入一行",
+    "rowDel": "行−",
+    "rowDelTitle": "删除当前行（最后一行时删除整个表格）",
+    "colAdd": "列+",
+    "colAddTitle": "在右侧插入一列",
+    "colDel": "列−",
+    "colDelTitle": "删除当前列（最后一列时删除整个表格）",
+    "alignLeft": "左",
+    "alignLeftTitle": "当前列左对齐",
+    "alignCenter": "中",
+    "alignCenterTitle": "当前列居中对齐",
+    "alignRight": "右",
+    "alignRightTitle": "当前列右对齐"
+  },
   "settings": {
     "title": "设置",
     "language": "界面语言",

@@ -36,6 +36,7 @@ npm run dist           # Build installer (mac: dmg / win: nsis)
 - Source mode (CodeMirror 6 full-document editing with built-in search panel)
 - Find & replace (decorator-based highlighting in WYSIWYG mode, replace current / replace all)
 - Outline panel (headings level 1-3, click to jump) and TOC block (GitHub-style anchors)
+- Table editing: floating toolbar on cursor entry (row/column add-remove, per-column alignment), drag-to-resize columns
 - Quick switch panel (Ctrl/Cmd+P): fuzzy-search open tabs, folder tree and recent files, Enter to open
 - File tree (open folder) and recent files list
 - Drag & drop: drop a .md file onto the window to open it (new tab); drop images to insert them per the paste strategy
