@@ -16,6 +16,7 @@ export const LOCALE_KEY = 'tmd:lang'
 export const AUTO_CHECK_UPDATE_KEY = 'tmd:auto-check-update'
 export const THEME_PRESET_KEY = 'tmd:theme-preset'
 export const CUSTOM_CSS_KEY = 'tmd:custom-css'
+export const SOURCE_LINENOS_KEY = 'tmd:src-linenos'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {
@@ -111,4 +112,14 @@ export function getCustomCss(): string {
 /** 持久化自定义 CSS */
 export function setCustomCss(css: string) {
   localStorage.setItem(CUSTOM_CSS_KEY, css)
+}
+
+/** 源码模式是否显示行号（默认显示；关闭后隐藏行号列与折叠标记） */
+export function getSourceLineNumbers(): boolean {
+  return localStorage.getItem(SOURCE_LINENOS_KEY) !== 'false'
+}
+
+/** 持久化源码模式行号开关 */
+export function setSourceLineNumbers(enabled: boolean) {
+  localStorage.setItem(SOURCE_LINENOS_KEY, enabled ? 'true' : 'false')
 }

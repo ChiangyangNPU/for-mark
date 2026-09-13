@@ -142,6 +142,8 @@
     "customCssHint": "Applies immediately, persists globally",
     "customCssPlaceholder": "/* Custom styles, e.g.: body { font-size: 18px; } */",
     "cssReset": "Reset",
+    "lineNumbers": "Show line numbers",
+    "lineNumbersHint": "Line-number gutter in source mode (applies immediately)",
     "autosave": "Auto-save to file",
     "autosaveHint": "Writes saved files back to disk every 5 seconds (desktop only)",
     "imageStrategy": "Pasted image storage",

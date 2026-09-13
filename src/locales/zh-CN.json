@@ -142,6 +142,8 @@
     "customCssHint": "即时生效，保存后全局持久",
     "customCssPlaceholder": "/* 自定义样式，例如：body { font-size: 18px; } */",
     "cssReset": "恢复默认",
+    "lineNumbers": "显示行号",
+    "lineNumbersHint": "源码模式左侧的行号与折叠标记（关闭后立即生效）",
     "autosave": "自动保存到文件",
     "autosaveHint": "每 5 秒将已保存过的文件自动写回磁盘（桌面版可用）",
     "imageStrategy": "粘贴图片存储方式",

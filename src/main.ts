@@ -56,7 +56,13 @@ import {
   setEditorHooks,
 } from './editor-core'
 import { initAutosave, setAutosaveOn, stopAutosave } from './autosave'
-import { openSettings, closeSettings, wireSettings, getCurrentImageStrategy } from './settings'
+import {
+  openSettings,
+  closeSettings,
+  wireSettings,
+  getCurrentImageStrategy,
+  applySourceLineNumbers,
+} from './settings'
 import { saveDoc, loadDoc, clearDoc, getTheme } from './store'
 
 // ---------------------------------------------------------------------------
@@ -111,6 +117,8 @@ async function boot() {
     setMermaidTheme(dark ? 'dark' : 'default')
     // 主题预设与自定义 CSS：恢复持久化的变量覆盖层
     restoreThemeStyles()
+    // 源码模式行号开关：恢复持久化状态（body class，CSS 层控制）
+    applySourceLineNumbers()
 
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
     setEditorHooks({

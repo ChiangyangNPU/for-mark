@@ -15,6 +15,8 @@ import {
   setAutoCheckUpdate,
   getCustomCss,
   getThemePreset,
+  getSourceLineNumbers,
+  setSourceLineNumbers,
 } from './store'
 import { changeThemePreset, changeCustomCss } from './theme-presets'
 import { renderTabs, updateTitle } from './tabs'
@@ -27,6 +29,11 @@ let imageStrategy: ImageStrategy = getImageStrategy()
 /** 粘贴图片上下文读取当前策略（main.ts 装配注入） */
 export function getCurrentImageStrategy(): ImageStrategy {
   return imageStrategy
+}
+
+/** 源码模式行号开关应用到 DOM（body.src-no-linenos 经 CSS 隐藏 gutter，不触碰编辑器实例） */
+export function applySourceLineNumbers() {
+  document.body.classList.toggle('src-no-linenos', !getSourceLineNumbers())
 }
 
 /** 打开设置面板并反映当前配置值 */
@@ -60,6 +67,8 @@ export function openSettings() {
   if (cssBox) cssBox.value = getCustomCss()
   const autoCheckBox = document.getElementById('set-auto-check-update') as HTMLInputElement | null
   if (autoCheckBox) autoCheckBox.checked = getAutoCheckUpdate()
+  const linenoBox = document.getElementById('set-linenos') as HTMLInputElement | null
+  if (linenoBox) linenoBox.checked = getSourceLineNumbers()
 
   overlay.hidden = false
 }
@@ -109,6 +118,12 @@ export function wireSettings() {
   })
   document.getElementById('set-autosave')?.addEventListener('change', (e) => {
     setAutosaveOn((e.target as HTMLInputElement).checked)
+  })
+  // 源码模式行号开关：持久化 + body class 即时生效（源码模式开着时切换立即变化）
+  document.getElementById('set-linenos')?.addEventListener('change', (e) => {
+    const enabled = (e.target as HTMLInputElement).checked
+    setSourceLineNumbers(enabled)
+    document.body.classList.toggle('src-no-linenos', !enabled)
   })
   document.querySelectorAll('input[name="set-img"]').forEach((input) => {
     input.addEventListener('change', () => {

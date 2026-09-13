@@ -894,6 +894,11 @@ img {
   font-size: 14px;
 }
 
+/* 设置「显示行号」关闭时挂 body.src-no-linenos：隐藏源码模式整列 gutter（行号 + 折叠标记） */
+body.src-no-linenos #src-editor .cm-gutters {
+  display: none;
+}
+
 /* ---------------- 查找替换栏 ---------------- */
 
 .find-bar {
