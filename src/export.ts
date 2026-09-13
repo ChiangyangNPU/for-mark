@@ -9,22 +9,65 @@ import { slugify } from './toc'
 
 const mdIt = new MarkdownIt({ html: false, linkify: true })
 
+/**
+ * 导出页消费的主题变量名（与 style.css 内建配色同名）。
+ * 值由 collectThemeVars 在导出瞬间抓取，经 :root 注入后此处以 var() 消费——
+ * 深浅模式、主题预设、自定义 CSS 改过的变量自动跟随；
+ * fallback 为默认浅色值，快照缺失时行为与旧版写死浅色一致。
+ */
+const THEME_VAR_NAMES = [
+  '--bg',
+  '--fg',
+  '--muted',
+  '--border',
+  '--accent',
+  '--code-bg',
+  '--pre-bg',
+  '--quote-bg',
+] as const
+
+/** 变量名到导出页值的映射（纯函数，便于单测） */
+export function buildThemeVarsBlock(vars: Record<string, string>): string {
+  const lines = THEME_VAR_NAMES.filter((name) => vars[name]).map(
+    (name) => `  ${name}: ${vars[name]};`,
+  )
+  return `:root {\n${lines.join('\n')}\n}`
+}
+
+/** 导出 CSS：颜色全部走 var()，兜底默认浅色 */
 const EXPORT_CSS = `
   body { max-width: 860px; margin: 0 auto; padding: 48px 32px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    color: #24292f; line-height: 1.75; }
+    color: var(--fg, #24292f); background: var(--bg, #ffffff); line-height: 1.75; }
+  a { color: var(--accent, #4a7cd4); }
   h1, h2, h3, h4 { font-weight: 600; line-height: 1.3; }
-  blockquote { margin: 0; padding: 4px 16px; border-left: 4px solid #4a7cd4; color: #6a737d; }
+  blockquote { margin: 0; padding: 4px 16px; border-left: 4px solid var(--accent, #4a7cd4);
+    color: var(--muted, #6a737d); background: var(--quote-bg, transparent); }
   code { font-family: 'SF Mono', Menlo, Consolas, monospace; font-size: 0.88em;
-    background: #f3f4f6; border-radius: 4px; padding: 2px 5px; }
-  pre { background: #f6f8fa; border: 1px solid #e2e6ea; border-radius: 8px; padding: 12px 16px; overflow-x: auto; }
+    background: var(--code-bg, #f3f4f6); border-radius: 4px; padding: 2px 5px; }
+  pre { background: var(--pre-bg, #f6f8fa); border: 1px solid var(--border, #e2e6ea);
+    border-radius: 8px; padding: 12px 16px; overflow-x: auto; }
   pre code { background: transparent; padding: 0; }
   table { border-collapse: collapse; width: 100%; }
-  th, td { border: 1px solid #e2e6ea; padding: 6px 12px; text-align: left; }
-  th { background: #f6f8fa; }
+  th, td { border: 1px solid var(--border, #e2e6ea); padding: 6px 12px; text-align: left; }
+  th { background: var(--pre-bg, #f6f8fa); }
   img { max-width: 100%; }
   .mermaid { display: flex; justify-content: center; }
 `
+
+/**
+ * 抓取当前已解析的主题变量快照（导出瞬间从 documentElement 计算）：
+ * 深浅模式、预设、自定义 CSS 的变量覆盖都会体现在计算值里
+ */
+function collectThemeVars(): Record<string, string> {
+  const cs = getComputedStyle(document.documentElement)
+  const vars: Record<string, string> = {}
+  for (const name of THEME_VAR_NAMES) {
+    const v = cs.getPropertyValue(name).trim()
+    if (v) vars[name] = v
+  }
+  return vars
+}
 
 /**
  * 渲染 markdown 为 HTML：
@@ -72,16 +115,27 @@ function renderMarkdown(markdown: string): string {
   return mdIt.render(cleaned)
 }
 
-/** 导出 HTML：渲染为内嵌样式、引 Mermaid/KaTeX CDN 的独立页面（Electron 存盘 / 浏览器下载） */
-export async function exportHtml(markdown: string, currentName: string) {
-  const html = `<!doctype html>
+/**
+ * 组装导出页 HTML（纯函数，便于单测）：
+ * - vars：collectThemeVars 的主题变量快照，经 buildThemeVarsBlock 注入 :root
+ * - isDark：mermaid 图表切 dark 主题（与当前深浅模式一致）
+ */
+export function buildExportHtml(
+  markdown: string,
+  currentName: string,
+  vars: Record<string, string>,
+  isDark: boolean,
+): string {
+  const mermaidTheme = isDark ? 'dark' : 'default'
+  return `<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <title>${currentName.replace(/\.md$/i, '')}</title>
+<style>${buildThemeVarsBlock(vars)}</style>
 <style>${EXPORT_CSS}</style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });</script>
+<script>mermaid.initialize({ startOnLoad: true, securityLevel: 'strict', theme: '${mermaidTheme}' });</script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
@@ -91,6 +145,16 @@ export async function exportHtml(markdown: string, currentName: string) {
 ${renderMarkdown(markdown)}
 </body>
 </html>`
+}
+
+/** 导出 HTML：按当前主题渲染为内嵌样式、引 Mermaid/KaTeX CDN 的独立页面（Electron 存盘 / 浏览器下载） */
+export async function exportHtml(markdown: string, currentName: string) {
+  const html = buildExportHtml(
+    markdown,
+    currentName,
+    collectThemeVars(),
+    document.documentElement.classList.contains('dark'),
+  )
 
   const defaultName = currentName.replace(/\.(md|markdown)$/i, '') + '.html'
   if (native) {
