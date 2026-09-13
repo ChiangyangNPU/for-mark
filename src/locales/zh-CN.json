@@ -107,6 +107,10 @@
     "link": "链接…",
     "removeLink": "移除链接"
   },
+  "qs": {
+    "placeholder": "搜索文件名，回车打开",
+    "empty": "无匹配文件"
+  },
   "settings": {
     "title": "设置",
     "language": "界面语言",

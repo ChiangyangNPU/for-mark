@@ -223,7 +223,8 @@ function buildMenu() {
         },
         {
           label: L('exportPdf'),
-          accelerator: 'CmdOrCtrl+P',
+          // Ctrl/Cmd+P 已让位给快速切换面板（高频优先），PDF 改 Shift+Mod+P
+          accelerator: 'Shift+CmdOrCtrl+P',
           click: () => sendToRenderer(IPC.menu, 'export-pdf'),
         },
       ],

@@ -23,6 +23,15 @@ import { renderFileTree, renderRecent } from './filetree'
 let folderTree: { path: string; name: string; children: import('./filetree').FileEntry[] } | null =
   null
 
+/** 当前打开的文件夹树（快速切换面板枚举用；未打开文件夹时为 null） */
+export function getFolderTree(): {
+  path: string
+  name: string
+  children: import('./filetree').FileEntry[]
+} | null {
+  return folderTree
+}
+
 /** 记录一条最近打开文件并刷新侧边栏 */
 function pushRecentWithRender(path: string, name: string) {
   pushRecent(path, name)

@@ -43,6 +43,7 @@ import { wireDragDrop } from './dragdrop'
 import { applyFormatAction, wireLinkBar, closeLinkBar } from './format'
 import { wireContextMenu, closeContextMenu } from './context-menu'
 import { setLinkNavContext, wireLinkNav } from './link-nav'
+import { openQuickSwitch, closeQuickSwitch, wireQuickSwitch } from './quick-switch'
 import {
   mountEditor,
   currentMarkdown,
@@ -220,10 +221,14 @@ async function boot() {
         closeSettings()
         closeLinkBar()
         closeContextMenu()
+        closeQuickSwitch()
       }
       const mod = e.metaKey || e.ctrlKey
       if (!mod) return
-      if (e.key === 'f' && !isSourceMode()) {
+      if (e.key === 'p') {
+        e.preventDefault()
+        openQuickSwitch()
+      } else if (e.key === 'f' && !isSourceMode()) {
         e.preventDefault()
         openFindBar()
       } else if (e.key === 'e') {
@@ -275,6 +280,7 @@ async function boot() {
     wireFindBar()
     wireLinkBar()
     wireContextMenu()
+    wireQuickSwitch()
     renderFilesSidebar()
     // 就绪信号：主进程补发排队中的待打开文件
     native?.ready()

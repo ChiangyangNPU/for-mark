@@ -107,6 +107,10 @@
     "link": "Link…",
     "removeLink": "Remove Link"
   },
+  "qs": {
+    "placeholder": "Search files by name, Enter to open",
+    "empty": "No matching files"
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",

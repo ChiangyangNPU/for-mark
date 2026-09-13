@@ -43,6 +43,11 @@ export function activeTab(): DocTab | undefined {
   return tabs.find((t) => t.id === activeTabId)
 }
 
+/** 全部标签页（只读副本，快速切换面板枚举用） */
+export function listTabs(): DocTab[] {
+  return [...tabs]
+}
+
 /** 获取当前激活标签页 id */
 export function getActiveTabId(): string | null {
   return activeTabId
