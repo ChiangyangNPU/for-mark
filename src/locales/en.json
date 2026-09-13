@@ -161,7 +161,7 @@
     "widthWide": "Wide",
     "widthFull": "Full",
     "wrap": "Word wrap",
-    "typographyHint": "Applies to the editing area only, takes effect immediately; long lines scroll horizontally when wrap is off",
+    "typographyHint": "Font size also applies to source mode; other options affect the editor only. Takes effect immediately; long lines scroll horizontally when wrap is off",
     "autosave": "Auto-save to file",
     "autosaveHint": "Writes saved files back to disk every 5 seconds (desktop only)",
     "imageStrategy": "Pasted image storage",

@@ -161,7 +161,7 @@
     "widthWide": "宽",
     "widthFull": "全宽",
     "wrap": "自动换行",
-    "typographyHint": "仅作用于正文编辑区，即时生效；关闭自动换行后长行横向滚动",
+    "typographyHint": "字号同时作用于源码模式，其余仅作用于正文；即时生效，关闭自动换行后长行横向滚动",
     "autosave": "自动保存到文件",
     "autosaveHint": "每 5 秒将已保存过的文件自动写回磁盘（桌面版可用）",
     "imageStrategy": "粘贴图片存储方式",
