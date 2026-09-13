@@ -17,6 +17,7 @@ import type { EditorView } from '@milkdown/kit/prose/view'
 import type { Node as ProseNode } from '@milkdown/kit/prose/model'
 import { mermaidPlugins } from './mermaid'
 import { pasteImage } from './paste-image'
+import { pasteHtml } from './paste-html'
 import { findPlugin, findClear } from './find'
 import { taskListClick } from './task-list'
 import { tocPlugins, fillTocBlocks } from './toc'
@@ -70,8 +71,9 @@ export function updateWordCount(markdown: string) {
  *
  * 插件清单：commonmark（基础语法）、gfm（表格/任务列表）、history（撤销重做）、
  * listener（内容监听）、mermaid（自研图表插件）、prism（代码高亮）、
- * math（KaTeX 公式）、pasteImage（粘贴图片）、findPlugin（查找高亮）、
- * taskListClick（任务复选框）、toc（目录块）、imageSrcResolver（相对路径图片）、
+ * math（KaTeX 公式）、pasteImage（粘贴图片）、pasteHtml（HTML 粘贴转换）、
+ * findPlugin（查找高亮）、taskListClick（任务复选框）、toc（目录块）、
+ * imageSrcResolver（相对路径图片）、linkNav（链接点击跳转）、
  * formatKeymap（格式化快捷键）。
  */
 async function createEditor(markdown: string): Promise<Editor> {
@@ -94,6 +96,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(prism)
     .use(math)
     .use(pasteImage)
+    .use(pasteHtml)
     .use(findPlugin)
     .use(taskListClick)
     .use(tocPlugins)
