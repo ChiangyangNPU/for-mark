@@ -186,6 +186,7 @@ class TableToolbarView {
   destroy(): void {
     window.removeEventListener('scroll', this.#reposition, true)
     window.removeEventListener('resize', this.#reposition)
+    this.#el.hidden = true // 编辑器销毁/重建（切源码模式、换标签）时隐藏残留
   }
 }
 

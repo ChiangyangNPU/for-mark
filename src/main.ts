@@ -45,6 +45,7 @@ import { wireContextMenu, closeContextMenu } from './context-menu'
 import { setLinkNavContext, wireLinkNav } from './link-nav'
 import { openQuickSwitch, closeQuickSwitch, wireQuickSwitch } from './quick-switch'
 import { wireTableToolbar } from './table-toolbar'
+import { normalizeEmptyTableCells } from './table-markdown'
 import {
   mountEditor,
   currentMarkdown,
@@ -114,8 +115,11 @@ async function boot() {
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
     setEditorHooks({
       onMarkdownChange: (md) => {
-        saveDoc(md)
-        updateWordCount(md)
+        // 恢复副本走原始序列化串：与 currentMarkdown 同做空单元格规范化，
+        // 避免 <br /> 占位（及其连带的转义伪影）经恢复副本污染文档
+        const clean = normalizeEmptyTableCells(md)
+        saveDoc(clean)
+        updateWordCount(clean)
         markDirty()
       },
       onDocUpdate: (doc) => {

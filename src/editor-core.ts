@@ -24,6 +24,7 @@ import { tocPlugins, fillTocBlocks } from './toc'
 import { imageSrcResolver } from './image-resolver'
 import { linkNav } from './link-nav'
 import { tableToolbar } from './table-toolbar'
+import { normalizeEmptyTableCells } from './table-markdown'
 import { formatKeymap } from './format'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
@@ -75,7 +76,7 @@ export function updateWordCount(markdown: string) {
  * math（KaTeX 公式）、pasteImage（粘贴图片）、pasteHtml（HTML 粘贴转换）、
  * findPlugin（查找高亮）、taskListClick（任务复选框）、toc（目录块）、
  * imageSrcResolver（相对路径图片）、linkNav（链接点击跳转）、
- * formatKeymap（格式化快捷键）。
+ * tableToolbar（表格悬浮工具栏）、formatKeymap（格式化快捷键）。
  */
 async function createEditor(markdown: string): Promise<Editor> {
   return Editor.make()
@@ -214,7 +215,9 @@ export function currentMarkdown(): string {
   if (sourceMode && cmView) return cmView.state.doc.toString()
   const markdown = editor?.action(getMarkdown()) ?? ''
   // toc 节点序列化为空注释占位，此处按当前文档标题填充为真实链接列表
-  return pmView ? fillTocBlocks(markdown, pmView.state.doc) : markdown
+  const filled = pmView ? fillTocBlocks(markdown, pmView.state.doc) : markdown
+  // 空表格单元格的 <br /> 占位清空（milkdown 空段落补偿，见 table-markdown.ts）
+  return normalizeEmptyTableCells(filled)
 }
 
 /**
@@ -232,6 +235,9 @@ export async function setSourceMode(on: boolean, syncContent = true) {
     cmView?.destroy()
     srcEl.textContent = ''
     cmView = createSourceEditor(srcEl, markdown)
+    // 进入源码模式：PM 编辑器保留（仅隐藏），插件 view 不会触发 destroy，
+    // 表格工具栏需显式隐藏
+    document.getElementById('table-toolbar')?.setAttribute('hidden', '')
   } else if (sourceMode && cmView) {
     const markdown = cmView.state.doc.toString()
     cmView.destroy()
