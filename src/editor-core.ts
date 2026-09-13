@@ -25,6 +25,7 @@ import { imageSrcResolver } from './image-resolver'
 import { linkNav } from './link-nav'
 import { tableToolbar } from './table-toolbar'
 import { normalizeEmptyTableCells } from './table-markdown'
+import { patchTextEscaping } from './text-escaping'
 import { formatKeymap } from './format'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
@@ -83,6 +84,8 @@ async function createEditor(markdown: string): Promise<Editor> {
     .config((ctx) => {
       ctx.set(rootCtx, document.getElementById('editor'))
       ctx.set(defaultValueCtx, markdown)
+      // 恢复文本转义：milkdown 的 text handler 早退捷径会漏转义表格单元格里的 `|`
+      patchTextEscaping(ctx)
       ctx.get(listenerCtx).markdownUpdated((_ctx, md, _prev) => {
         hooks.onMarkdownChange(md)
       })
