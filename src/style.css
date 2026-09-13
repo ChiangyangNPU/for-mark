@@ -933,6 +933,20 @@ body.src-no-linenos #src-editor .cm-gutters {
   display: none;
 }
 
+/* ---------------- 专注模式 ---------------- */
+
+/* 顶层块（含 mermaid/toc/数学块等自定义 div）与列表项变暗；
+   光标所在块的祖先链由装饰器挂 .fm-active 整链置亮，避开 opacity 嵌套乘算 */
+body.focus-mode .ProseMirror > *,
+body.focus-mode .ProseMirror li {
+  opacity: 0.18;
+  transition: opacity 0.15s ease;
+}
+
+body.focus-mode .ProseMirror .fm-active {
+  opacity: 1;
+}
+
 /* ---------------- 查找替换栏 ---------------- */
 
 .find-bar {

@@ -17,9 +17,12 @@ import {
   getThemePreset,
   getSourceLineNumbers,
   setSourceLineNumbers,
+  getFocusMode,
+  getTypewriterMode,
 } from './store'
 import { changeThemePreset, changeCustomCss } from './theme-presets'
 import { reflectTypography, wireTypography } from './typography'
+import { setFocusMode, setTypewriterMode } from './writing-modes'
 import { renderTabs, updateTitle } from './tabs'
 import { currentMarkdown, updateWordCount } from './editor-core'
 import type { ImageStrategy } from './paste-image'
@@ -70,6 +73,10 @@ export function openSettings() {
   if (autoCheckBox) autoCheckBox.checked = getAutoCheckUpdate()
   const linenoBox = document.getElementById('set-linenos') as HTMLInputElement | null
   if (linenoBox) linenoBox.checked = getSourceLineNumbers()
+  const focusBox = document.getElementById('set-focus-mode') as HTMLInputElement | null
+  if (focusBox) focusBox.checked = getFocusMode()
+  const typewriterBox = document.getElementById('set-typewriter-mode') as HTMLInputElement | null
+  if (typewriterBox) typewriterBox.checked = getTypewriterMode()
   // 排版设置反射（typography 模块自持）
   reflectTypography()
 
@@ -129,6 +136,13 @@ export function wireSettings() {
     const enabled = (e.target as HTMLInputElement).checked
     setSourceLineNumbers(enabled)
     document.body.classList.toggle('src-no-linenos', !enabled)
+  })
+  // 专注 / 打字机模式：writing-modes 模块自持持久化与即时生效
+  document.getElementById('set-focus-mode')?.addEventListener('change', (e) => {
+    setFocusMode((e.target as HTMLInputElement).checked)
+  })
+  document.getElementById('set-typewriter-mode')?.addEventListener('change', (e) => {
+    setTypewriterMode((e.target as HTMLInputElement).checked)
   })
   document.querySelectorAll('input[name="set-img"]').forEach((input) => {
     input.addEventListener('change', () => {

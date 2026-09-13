@@ -64,6 +64,7 @@ import {
   applySourceLineNumbers,
 } from './settings'
 import { applyTypography } from './typography'
+import { applyWritingModes, wireTypewriter } from './writing-modes'
 import { saveDoc, loadDoc, clearDoc, getTheme } from './store'
 
 // ---------------------------------------------------------------------------
@@ -122,6 +123,9 @@ async function boot() {
     applySourceLineNumbers()
     // 排版设置：恢复持久化配置（CSS 变量层，不触碰编辑器实例）
     applyTypography()
+    // 专注/打字机模式：恢复专注 body class，挂打字机选区监听
+    applyWritingModes()
+    wireTypewriter()
 
     // 文档变更钩子：保存恢复副本 / 字数 / 脏标记；结构变化刷新大纲
     setEditorHooks({

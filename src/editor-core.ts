@@ -27,6 +27,7 @@ import { tableToolbar } from './table-toolbar'
 import { normalizeEmptyTableCells } from './table-markdown'
 import { patchTextEscaping } from './text-escaping'
 import { formatKeymap } from './format'
+import { focusPlugin } from './writing-modes'
 import { collectOutline, renderOutline } from './outline'
 import { createSourceEditor } from './sourcemode'
 import { t } from './i18n'
@@ -77,7 +78,8 @@ export function updateWordCount(markdown: string) {
  * math（KaTeX 公式）、pasteImage（粘贴图片）、pasteHtml（HTML 粘贴转换）、
  * findPlugin（查找高亮）、taskListClick（任务复选框）、toc（目录块）、
  * imageSrcResolver（相对路径图片）、linkNav（链接点击跳转）、
- * tableToolbar（表格悬浮工具栏）、formatKeymap（格式化快捷键）。
+ * tableToolbar（表格悬浮工具栏）、formatKeymap（格式化快捷键）、
+ * focusPlugin（专注模式变暗装饰器）。
  */
 async function createEditor(markdown: string): Promise<Editor> {
   return Editor.make()
@@ -109,6 +111,7 @@ async function createEditor(markdown: string): Promise<Editor> {
     .use(linkNav)
     .use(tableToolbar)
     .use(formatKeymap)
+    .use(focusPlugin)
     .create()
 }
 

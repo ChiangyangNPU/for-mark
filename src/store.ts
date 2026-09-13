@@ -18,6 +18,8 @@ export const THEME_PRESET_KEY = 'tmd:theme-preset'
 export const CUSTOM_CSS_KEY = 'tmd:custom-css'
 export const SOURCE_LINENOS_KEY = 'tmd:src-linenos'
 export const TYPOGRAPHY_KEY = 'tmd:typography'
+export const FOCUS_MODE_KEY = 'tmd:focus-mode'
+export const TYPEWRITER_MODE_KEY = 'tmd:typewriter-mode'
 
 /** 文档内容写入恢复副本 */
 export function saveDoc(markdown: string) {
@@ -164,4 +166,24 @@ export function getTypography(): Typography {
 /** 持久化排版设置 */
 export function setTypography(typography: Typography) {
   localStorage.setItem(TYPOGRAPHY_KEY, JSON.stringify(typography))
+}
+
+/** 专注模式是否开启（当前段落高亮、其余变暗；默认关闭） */
+export function getFocusMode(): boolean {
+  return localStorage.getItem(FOCUS_MODE_KEY) === 'true'
+}
+
+/** 持久化专注模式开关 */
+export function setFocusModeStorage(enabled: boolean) {
+  localStorage.setItem(FOCUS_MODE_KEY, enabled ? 'true' : 'false')
+}
+
+/** 打字机模式是否开启（光标恒处编辑区垂直中央；默认关闭） */
+export function getTypewriterMode(): boolean {
+  return localStorage.getItem(TYPEWRITER_MODE_KEY) === 'true'
+}
+
+/** 持久化打字机模式开关 */
+export function setTypewriterModeStorage(enabled: boolean) {
+  localStorage.setItem(TYPEWRITER_MODE_KEY, enabled ? 'true' : 'false')
 }
